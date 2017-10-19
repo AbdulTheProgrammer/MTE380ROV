@@ -4,8 +4,8 @@ void Attitude::init(void)
 {
     const int accelFSR = 2;
     const int gyroFSR  = 2000;
-    const int accelGyroSampleRate = 100;
-    const int compassSampleRate   = 100;
+    const int accelGyroSampleRate = 200;
+    const int compassSampleRate   = 200;
     const int LPF_Freq = 5;
 
     // Call imu.begin() to verify communication with and
@@ -19,7 +19,7 @@ void Attitude::init(void)
             Serial.println("Unable to communicate with MPU-9250");
             Serial.println("Check connections, and try again.");
             Serial.println();
-            delay(3000);
+            delay(1000);
         }
     }
 
@@ -94,13 +94,16 @@ void Attitude::updateKalmanAngles(void)
     timer = micros();
 
      // Take raw IMU readings (previously updated)
-    accX = imu.ax;
-    accY = imu.ay;
-    accZ = imu.az;
+    accX  = imu.ax;
+    accY  = imu.ay;
+    accZ  = imu.az;
     gyroX = imu.gx;
     gyroY = imu.gy;
     gyroZ = imu.gz;
-
+    magX  = imu.mx;
+    magY  = imu.my;
+    magZ  = imu.mz;
+    
     // Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
     // atan2 outputs the value of -π to π (radians) - see http://en.wikipedia.org/wiki/Atan2
     // It is then converted from radians to degrees
