@@ -14,13 +14,13 @@ private:
 	// Kalman filter instances
 	Kalman kalmanX;
 	Kalman kalmanY;
-  Kalman kalmanZ;
+  Kalman kalmanZ
 
   // Raw axes
   double pitch_raw, roll_raw, yaw_raw;
 
 	// Calcualted angle using  Kalman filter
-	double kalAngleX, kalAngleY, kalAngleZ;
+	double kalAngleX, kalAngleY, kalAngleZ
 
 	// Timer for measuring time step
 	uint32_t timer;
