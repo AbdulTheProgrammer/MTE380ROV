@@ -20,9 +20,8 @@ class Orienter
   Attitude attitude;
   /* motor stuff */
  public:
-  Orienter();
-  ~Orienter();
+  Orienter(int a);
   void step();
   void setOrientation(double pitch, double roll, double yaw);
-  void updateOrientation():
+  void updateOrientation();
 };

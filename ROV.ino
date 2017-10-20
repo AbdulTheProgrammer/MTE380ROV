@@ -1,5 +1,5 @@
 #include "attitude.h"
-
+#include "motorControl.h"
 /************************************************************
 MPU9250_Basic
 Basic example sketch for MPU-9250 DMP Arduino Library
@@ -14,41 +14,21 @@ SparkFun 9DoF Razor IMU M0
 Supported Platforms:
 - ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
 *************************************************************/
-
-Attitude attitude;
+Orienter orienter(0);
 
 void setup()
 {
   Wire.begin();
   Serial.begin(38400);
-  Serial.println("Initialized.");
-  PID pitchPID(&(y_axis.input), &(y_axis.output), &(y_axis.setpoint),2,5,1, DIRECT);
-  PID rollPID(&(x_axis.input), &(x_axis.output), &(x_axis.setpoint),2,5,1, DIRECT);
-  PID yawPID(&(z_axis.input), &(z_axis.output), &(z_axis.setpoint),2,5,1, DIRECT);
-  attitude.init();
+  Serial.println("Initialized.");  
+  orienter.setOrientation(0,0,0);
 
   delay(50);
 }
 
 void loop()
 {
-  double pitch, roll, yaw;
-  double Setpoint, Input, Output;
-
-  attitude.getUpdatedAxes(&pitch, &roll, &yaw);
-  y_axis.input = pitch;
-  x_axis.input = roll;
-  z_axis.input = yaw;
-
-  printAxes(pitch, roll, yaw);
-
-<<<<<<< HEAD
-  printAxes(pitch, roll, yaw);
-=======
-  pitchPID.Compute();
-  rollPID.Compute();
-  yawPID.Compute();
->>>>>>> Added control loop code.
+  orienter.updateOrientation();
 
   delay(10);
 }
