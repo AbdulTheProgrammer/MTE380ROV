@@ -19,9 +19,8 @@ Attitude attitude;
 
 void setup() 
 {
-  Serial.begin(115200);
-  Serial.println("Initialized.");
-
+  Wire.begin();
+  Serial.begin(38400);
   attitude.init();
 
   delay(50);
@@ -33,9 +32,9 @@ void loop()
   
   attitude.getUpdatedAxes(&pitch, &roll, &yaw);
 
- // printAxes(pitch, roll, yaw);
+  printAxes(pitch, roll, yaw);
 
-  delay(100);
+  delay(10);
 }
 
 void printAxes(double pitch, double roll, double yaw)
