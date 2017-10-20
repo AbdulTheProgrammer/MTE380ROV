@@ -1,6 +1,7 @@
 #pragma once
 
 #include <PID_v1.h>
+#include "attitude.h"
 
 typedef struct axis
 {
@@ -9,20 +10,19 @@ typedef struct axis
   double setpoint = 0;
 } axis_t;
 
-class motorControl
+class Orienter
 {
-private:
-/* */
-PID pitchPID;
-PID rollPID
-PID yawPID;
-axis_t x_axis;
-axis_t y_axis;
-axis_t z_axis;
-
-/* motor stuff */
-public:
-
-void update();
-
-}
+ private: 
+  /* motor stuff */
+  PID pitchPID;
+  PID rollPID;
+  PID yawPID;
+  Attitude attitude;
+  /* motor stuff */
+ public:
+  Orienter();
+  ~Orienter();
+  void step();
+  void setOrientation(double pitch, double roll, double yaw);
+  void updateOrientation():
+};
