@@ -5,7 +5,7 @@ void Attitude::init(void)
     const int accelFSR = 2;
     const int gyroFSR  = 2000;
     const int accelGyroSampleRate = 200;
-    const int compassSampleRate   = 200;
+    const int compassSampleRate   = 100;
     const int LPF_Freq = 5;
 
     // Call imu.begin() to verify communication with and
@@ -57,6 +57,8 @@ void Attitude::init(void)
 
 void Attitude::getUpdatedAxes(double *pitch, double *roll, double *yaw)
 {
+    double dt;
+
     // dataReady() checks to see if new accel/gyro data
     // is available. It will return a boolean true or false
     // (New magnetometer data cannot be checked, as the library
@@ -71,8 +73,13 @@ void Attitude::getUpdatedAxes(double *pitch, double *roll, double *yaw)
         //  so you don't have to specify these values.)
         imu.update(UPDATE_ACCEL | UPDATE_GYRO | UPDATE_COMPASS);
 
+        
+        dt = (double)(micros() - timer) / 1000000; // Calculate delta time
+        timer = micros();
+
         // Pass values through the Kalman filter
-        updateKalmanAngles();
+        updateKalmanPitchRoll(dt);
+        updateKalmanYaw(dt);
     }
     else {
         Serial.println("IMU data not ready; sample rate needs to be increased.!");
@@ -81,17 +88,13 @@ void Attitude::getUpdatedAxes(double *pitch, double *roll, double *yaw)
 
     *pitch = kalAngleY;
     *roll  = kalAngleX;
-    *yaw   = 0; // TODO 
+    *yaw   = kalAngleZ; 
 }
 
-void Attitude::updateKalmanAngles(void)
+void Attitude::updateKalmanPitchRoll(double dt)
 {
-    double dt;
-    double gyroXrate;
-    double gyroYrate;
-
-    dt = (double)(micros() - timer) / 1000000; // Calculate delta time
-    timer = micros();
+    double gyroXrate, gyroYrate;
+    double accX, accY, accZ, gyroX, gyroY;
 
      // Take raw IMU readings (previously updated)
     accX  = imu.ax;
@@ -99,34 +102,20 @@ void Attitude::updateKalmanAngles(void)
     accZ  = imu.az;
     gyroX = imu.gx;
     gyroY = imu.gy;
-    gyroZ = imu.gz;
-    magX  = imu.mx;
-    magY  = imu.my;
-    magZ  = imu.mz;
     
     // Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
     // atan2 outputs the value of -π to π (radians) - see http://en.wikipedia.org/wiki/Atan2
     // It is then converted from radians to degrees
 #ifdef RESTRICT_PITCH // Eq. 25 and 26
-    double roll  = atan2(accY, accZ) * RAD_TO_DEG;
-    double pitch = atan(-accX / sqrt(accY * accY + accZ * accZ)) * RAD_TO_DEG;
+    double roll  = atan2(accY, accZ);
+    double pitch = atan(-accX / sqrt(accY * accY + accZ * accZ));
 #else // Eq. 28 and 29
-    double roll  = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
-    double pitch = atan2(-accX, accZ) * RAD_TO_DEG;
+    double roll  = atan(accY / sqrt(accX * accX + accZ * accZ));
+    double pitch = atan2(-accX, accZ);
 #endif
 
-    // Check if the IMU gave invalid data, resulting in NaN after atan.
-    if (pitch != pitch)
-    {
-        Serial.println("!!!Invalid data!!!");
-        Serial.print("accX ");
-        Serial.print(accX);
-        Serial.print(" accY ");
-        Serial.print(accY);
-        Serial.print(" accZ ");
-        Serial.println(accZ);
-        delay(3000);
-    }
+    roll  = roll * RAD_TO_DEG;
+    pitch = pitch * RAD_TO_DEG;
 
     gyroXrate = gyroX / 131.0; // Convert to deg/s
     gyroYrate = gyroY / 131.0; // Convert to deg/s
@@ -136,8 +125,9 @@ void Attitude::updateKalmanAngles(void)
     if ((roll < -90 && kalAngleX > 90) || (roll > 90 && kalAngleX < -90)) {
         kalmanX.setAngle(roll);
         kalAngleX = roll;
-    } else
+    } else {
         kalAngleX = kalmanX.getAngle(roll, gyroXrate, dt); // Calculate the angle using a Kalman filter
+    }
 
     if (abs(kalAngleX) > 90) {
         gyroYrate = -gyroYrate; // Invert rate, so it fits the restriced accelerometer reading
@@ -158,3 +148,37 @@ void Attitude::updateKalmanAngles(void)
     kalAngleX = kalmanX.getAngle(roll, gyroXrate, dt); // Calculate the angle using a Kalman filter
 #endif
 }
+
+void Attitude::updateKalmanYaw(double dt)
+{
+    double gyroZ, gyroZrate;
+    double magX, magY, magZ;
+    
+    magX  = imu.calcMag(imu.mx);
+    magY  = imu.calcMag(imu.my);
+    magZ  = imu.calcMag(imu.mz);
+
+    Serial.print(magX);
+    Serial.print("\t");
+    Serial.print(magY);
+    Serial.print("\t");
+    Serial.println(magZ);
+
+    gyroZrate = gyroZ / 131.0; // Convert to deg/s
+
+    double rollAngle = kalAngleX * DEG_TO_RAD;
+    double pitchAngle = kalAngleY * DEG_TO_RAD;
+  
+    double Bfy = magZ * sin(rollAngle) - magY * cos(rollAngle);
+    double Bfx = magX * cos(pitchAngle) + magY * sin(pitchAngle) * sin(rollAngle) + magZ * sin(pitchAngle) * cos(rollAngle);
+    double yaw = atan2(-Bfy, Bfx) * RAD_TO_DEG;
+
+    // This fixes the transition problem when the magnetometer angle jumps between -180 and 180 degrees
+    if ((yaw < -90 && kalAngleZ > 90) || (yaw > 90 && kalAngleZ < -90)) {
+        kalmanZ.setAngle(yaw);
+        kalAngleZ = yaw;
+    } else {
+        kalAngleZ = kalmanZ.getAngle(yaw, gyroZrate, dt); // Calculate the angle using a Kalman filter
+    }
+}
+

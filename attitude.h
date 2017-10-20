@@ -14,19 +14,17 @@ private:
 	// Kalman filter instances
 	Kalman kalmanX;
 	Kalman kalmanY;
-
-	// IMU raw data
-	double accX, accY, accZ;
-	double gyroX, gyroY, gyroZ;
-	double magX, magY, magZ;
+  Kalman kalmanZ;
 
 	// Calcualted angle using  Kalman filter
-	double kalAngleX, kalAngleY;
+	double kalAngleX, kalAngleY, kalAngleZ;
 
 	// Timer for measuring time step
 	uint32_t timer;
 
-  void updateKalmanAngles();
+  void updateKalmanAngles(void);
+  void updateKalmanPitchRoll(double dt);
+  void updateKalmanYaw(double dt);
 
 public:
 	void init(void);

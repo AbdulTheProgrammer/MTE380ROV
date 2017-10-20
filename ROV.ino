@@ -33,9 +33,9 @@ void loop()
   
   attitude.getUpdatedAxes(&pitch, &roll, &yaw);
 
-  printAxes(pitch, roll, yaw);
+ // printAxes(pitch, roll, yaw);
 
-  delay(2);
+  delay(100);
 }
 
 void printAxes(double pitch, double roll, double yaw)
