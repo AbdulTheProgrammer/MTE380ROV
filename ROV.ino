@@ -14,36 +14,25 @@ SparkFun 9DoF Razor IMU M0
 Supported Platforms:
 - ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
 *************************************************************/
-Orienter orienter(0);
+Orienter orienter;
+
+#define LOOP_DELAY_MS 500
 
 void setup()
 {
   Wire.begin();
   Serial.begin(38400);
-  Serial.println("Initialized.");  
-  orienter.setOrientation(0,0,0);
+  Serial.println("Initialized.");
+  orienter.start();
 
-  delay(50);
+  delay(LOOP_DELAY_MS);
 }
 
 void loop()
 {
-  orienter.updateOrientation();
+  orienter.stabilize();
 
-  delay(10);
-}
+  
 
-void printAxes(double pitch, double roll, double yaw)
-{
-  Serial.print("Pitch: ");
-  Serial.print(pitch);
-  Serial.print("\t");
-
-  Serial.print("Roll: ");
-  Serial.print(roll);
-  Serial.print("\t");
-
-  Serial.print("Yaw: ");
-  Serial.print(yaw);
-  Serial.print("\r\n");
+  delay(LOOP_DELAY_MS);
 }

@@ -13,15 +13,22 @@ typedef struct axis
 class Orienter
 {
  private: 
-  /* motor stuff */
+  // PID controllers
   PID pitchPID;
   PID rollPID;
   PID yawPID;
+  
+  // PID setpoint (xr), input (x), and output (u)
+  double pitchSetpoint, rollSetpoint, yawSetpoint;
+  double pitchInput, rollInput, yawInput;
+  double pitchOutput, rollOutput, yawOutput;
+
+  // IMU instance
   Attitude attitude;
-  /* motor stuff */
+  
  public:
-  Orienter(int a);
-  void step();
+  Orienter(void);
+  void start(void);
   void setOrientation(double pitch, double roll, double yaw);
-  void updateOrientation();
+  void stabilize(void);
 };

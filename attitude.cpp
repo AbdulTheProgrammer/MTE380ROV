@@ -2,6 +2,8 @@
 
 #define KALMAN_Q_ANGLE 0.1f
 
+#define DO_FULL_INIT_SEQUENCE 0
+
 int Attitude::init(void)
 {
     const int accelFSR = 2;
@@ -23,6 +25,8 @@ int Attitude::init(void)
   }
     Serial.println(F("MPU9250 is online..."));
 
+#if DO_FULL_INIT_SEQUENCE
+
     // Start by performing self test and reporting values
     imu.MPU9250SelfTest(imu.selfTest);
     Serial.print(F("x-axis self test: acceleration trim within : "));
@@ -40,6 +44,8 @@ int Attitude::init(void)
 
     // Calibrate gyro and accelerometers, load biases in bias registers
     imu.calibrateMPU9250(imu.gyroBias, imu.accelBias);
+    
+#endif // DO_FULL_INIT_SEQUENCE
 
     imu.initMPU9250();
     // Initialize device for active mode read of acclerometer, gyroscope, and
@@ -81,6 +87,7 @@ int Attitude::init(void)
     imu.getGres();
     imu.getMres();
 
+#if DO_FULL_INIT_SEQUENCE
     // The next call delays for 4 seconds, and then records about 15 seconds of
     // data to calculate bias and scale.
     imu.magCalMPU9250(imu.magBias, imu.magScale);
@@ -104,6 +111,8 @@ int Attitude::init(void)
 
     delay(2000);
 
+#endif //DO_FULL_INIT_SEQUENCE
+
     kalmanX.setQangle(KALMAN_Q_ANGLE);
     kalmanY.setQangle(KALMAN_Q_ANGLE);
     kalmanZ.setQangle(KALMAN_Q_ANGLE);
@@ -114,8 +123,6 @@ int Attitude::init(void)
 //    imu.updateTime();
 //    updateKalmanPitchRoll();
 //    updateKalmanYaw();
-//
-//    KalmanX.setAngle(Kal
 
     return true;
 }
@@ -193,7 +200,8 @@ void Attitude::updateKalmanPitchRoll(void)
     pitch_raw = atan2(-accX, accZ);
 #endif
 
-    double roll  = roll_raw * RAD_TO_DEG;
+    // Invert roll since upside down IMU
+    double roll  = ( roll_raw > 0 ) ? roll_raw * RAD_TO_DEG -180 : 180 + roll_raw * RAD_TO_DEG;
     double pitch = pitch_raw * RAD_TO_DEG;
 
     gyroXrate = gyroX / 131.0; // Convert to deg/s
