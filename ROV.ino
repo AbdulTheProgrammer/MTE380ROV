@@ -1,4 +1,3 @@
-#include "attitude.h"
 #include "motorControl.h"
 /************************************************************
 MPU9250_Basic
@@ -14,9 +13,10 @@ SparkFun 9DoF Razor IMU M0
 Supported Platforms:
 - ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
 *************************************************************/
-Orienter orienter;
 
-#define LOOP_DELAY_MS 500
+static Orienter orienter;
+
+#define LOOP_DELAY_MS 50
 
 void setup()
 {
@@ -31,8 +31,6 @@ void setup()
 void loop()
 {
   orienter.stabilize();
-
-  
 
   delay(LOOP_DELAY_MS);
 }

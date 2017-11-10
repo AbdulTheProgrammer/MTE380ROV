@@ -2,7 +2,7 @@
 
 #define KALMAN_Q_ANGLE 0.1f
 
-#define DO_FULL_INIT_SEQUENCE 0
+#define DO_FULL_INIT_SEQUENCE 1
 
 int Attitude::init(void)
 {

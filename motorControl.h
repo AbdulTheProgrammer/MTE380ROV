@@ -1,6 +1,7 @@
 #pragma once
 
 #include <PID_v1.h>
+#include <Servo.h>
 #include "attitude.h"
 
 typedef struct axis
@@ -25,7 +26,15 @@ class Orienter
 
   // IMU instance
   Attitude attitude;
-  
+
+  // Motor instances
+  Servo motorBL;
+  Servo motorBR;
+  Servo motorBC;
+  Servo motorFL;
+  Servo motorFR;
+
+  void setMotors(void);
  public:
   Orienter(void);
   void start(void);
