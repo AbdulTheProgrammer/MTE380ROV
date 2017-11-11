@@ -1,4 +1,4 @@
-#include "motorControl.h"
+#include "controls.h"
 
 #define MOTOR_STARTUP_DELAY_MS (1000)
 #define MOTOR_LIMIT_MARGIN     (20)
@@ -30,21 +30,16 @@ static int PORTBC = 11;
 static int PORTFR = 9;
 static int PORTFL = 10;
 
-Orienter::Orienter(void) :   pitchPID(&pitchInput, &pitchOutput, &pitchSetpoint, PID_PITCH_KP, PID_PITCH_KI, PID_PITCH_KD, DIRECT),
-  rollPID(&rollInput, &rollOutput, &rollSetpoint, PID_ROLL_KP, PID_ROLL_KI, PID_ROLL_KD, DIRECT),
-  yawPID(&yawInput, &yawOutput, &yawSetpoint, PID_YAW_KP, PID_YAW_KI, PID_YAW_KD, DIRECT)
+Controls::Controls(void) :   pitchPID(&input.pitch, &output.pitch, &setPoint.pitch, PID_PITCH_KP, PID_PITCH_KI, PID_PITCH_KD, DIRECT),
+  rollPID(&input.roll, &output.roll, &setPoint.roll, PID_ROLL_KP, PID_ROLL_KI, PID_ROLL_KD, DIRECT),
+  yawPID(&input.yaw, &output.yaw, &setPoint.yaw, PID_YAW_KP, PID_YAW_KI, PID_YAW_KD, DIRECT),
+  attitude()
 {
-  // Init setpoint (xr), input (x) and output (u) to 0
-  pitchSetpoint = pitchInput =  pitchOutput = 0;
-  rollSetpoint  = rollInput  = rollOutput   = 0;
-  yawSetpoint   = yawInput   = yawOutput    = 0;
-}
-
-void Orienter::start(void)
-{
-  // Does a whole bunch of init currenly, including self-test and calibration
-  attitude.init();
-  
+  // Init setPoint (xr), input (x) and output (u) to 0
+  setPoint.pitch = input.pitch = output.pitch  = 0;
+  setPoint.roll  = input.roll  = output.roll   = 0;
+  setPoint.yaw   = input.yaw   = output.yaw    = 0;
+    
   // Set sample time of PID
   pitchPID.SetSampleTime(PID_SAMPLE_TIME_MS);
   rollPID.SetSampleTime(PID_SAMPLE_TIME_MS);
@@ -59,7 +54,10 @@ void Orienter::start(void)
   pitchPID.SetMode(AUTOMATIC);
   rollPID.SetMode(AUTOMATIC);
   yawPID.SetMode(AUTOMATIC);
+}
 
+void Controls::InitializeMotors(void)
+{
   // Attach motor instances to their pins
   motorBR.attach(PORTBR);
   motorBL.attach(PORTBL);
@@ -76,11 +74,22 @@ void Orienter::start(void)
   motorFL.write(MOTOR_NEUTRAL);
 }
 
-void Orienter::stabilize(void)
+void Controls::CalibateMPU9250(void)
+{
+  // Calibrate the MPU
+  attitude.calibrateMPU9250();
+}
+
+void Controls::CalibateAK8963(void)
+{
+  attitude.calibrateAK8963();
+}
+
+void Controls::Stabilize(void)
 {
   // Get newest IMU data on pitch roll and yaw
-  attitude.getUpdatedAxes(&pitchInput, &rollInput, &yawInput);
-
+  attitude.getUpdatedOrientation(input);
+  
   // Compute new values from the PID loop (saved in the 
   pitchPID.Compute();
   rollPID.Compute();
@@ -90,14 +99,17 @@ void Orienter::stabilize(void)
   setMotors();
 }
 
-void Orienter::setOrientation(double pitch, double roll, double yaw)
+void Controls::SetDesiredOrientation(const Orientation &inOrientation)
 {
-  pitchSetpoint = pitch;
-  rollSetpoint = roll;
-  yawSetpoint = yaw;
+  setPoint = inOrientation;
 }
 
-void Orienter::setMotors(void)
+void Controls::GetCurrentOrientation(Orientation &outOrientation)
+{
+  outOrientation = input;
+}
+
+void Controls::setMotors(void)
 {
   int motorBRVal, motorBLVal, motorBCVal, motorFRVal, motorFLVal;
 
@@ -109,17 +121,17 @@ void Orienter::setMotors(void)
   motorFLVal = MOTOR_NEUTRAL;
 
   // Pitch correction
-  motorBCVal += pitchOutput;
-  motorFLVal -= pitchOutput/2;
-  motorFRVal -= pitchOutput/2;
+  motorBCVal += output.pitch;
+  motorFLVal -= output.pitch/2;
+  motorFRVal -= output.pitch/2;
 
   // Roll correction  
-  motorFLVal += rollOutput;
-  motorFRVal -= rollOutput;
+  motorFLVal += output.roll;
+  motorFRVal -= output.roll;
 
   // Yaw correction UNUSED
-  motorBLVal += yawOutput;
-  motorBRVal -= yawOutput;
+  motorBLVal += output.yaw;
+  motorBRVal -= output.yaw;
 
   // Write to motors
   motorBC.write(motorBCVal);

@@ -1,4 +1,4 @@
-#include "motorControl.h"
+#include "controls.h"
 /************************************************************
 MPU9250_Basic
 Basic example sketch for MPU-9250 DMP Arduino Library
@@ -14,23 +14,31 @@ Supported Platforms:
 - ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
 *************************************************************/
 
-static Orienter orienter;
+static Controls controls;
 
 #define LOOP_DELAY_MS 50
 
 void setup()
 {
+  Orientation initialOrientation;
+  
   Wire.begin();
   Serial.begin(38400);
-  Serial.println("Initialized.");
-  orienter.start();
+  controls.InitializeMotors();
+  
+  Serial.println("Initialized. Calibrating MPU..");
+  controls.CalibateMPU9250();
+
+  Serial.println("Calibrating AK8963...");
+  controls.CalibateAK8963();
 
   delay(LOOP_DELAY_MS);
 }
 
 void loop()
 {
-  orienter.stabilize();
+  controls.Stabilize();
 
+  // update controls.setDesiredOrientation() here
   delay(LOOP_DELAY_MS);
 }
