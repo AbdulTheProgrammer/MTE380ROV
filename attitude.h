@@ -49,6 +49,7 @@ public:
    * \brief   Starts the MPU9250, and calibrates the IMU. 
    * 
    * \details This should be called when the IMU is completely upright on a flat surface.
+   *          This process should take about 5 seconds.
    */
   bool calibrateMPU9250(void);
   

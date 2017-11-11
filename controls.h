@@ -4,6 +4,8 @@
 #include <Servo.h>
 #include "attitude.h"
 
+#define PRINT_MOTOR_VALUES 1 // Set to 1 to print values sent to motor. Set to 0 to turn off.
+
 typedef struct axis
 {
   double input = 0;
@@ -44,6 +46,7 @@ class Controls
    * \brief   Starts the MPU9250, and calibrates the IMU. 
    * 
    * \details This should be called when the IMU is completely upright on a flat surface.
+   *          This process should take about 5 seconds.
    */
   void CalibateMPU9250(void);
 

@@ -22,8 +22,6 @@
 #define PID_YAW_KI   0
 #define PID_YAW_KD   0
 
-#define PRINT_MOTOR_VALUES 1
-
 static int PORTBR = 13;
 static int PORTBL = 12;
 static int PORTBC = 11;
