@@ -6,13 +6,6 @@
 
 #define PRINT_MOTOR_VALUES 1 // Set to 1 to print values sent to motor. Set to 0 to turn off.
 
-typedef struct axis
-{
-  double input = 0;
-  double output = 0 ;
-  double setpoint = 0;
-} axis_t;
-
 class Controls
 {
  private: 
