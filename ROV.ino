@@ -1,12 +1,11 @@
-#include "attitude.h"
-
+#include "controls.h"
 /************************************************************
 MPU9250_Basic
- Basic example sketch for MPU-9250 DMP Arduino Library 
+Basic example sketch for MPU-9250 DMP Arduino Library
 Jim Lindblom @ SparkFun Electronics
 original creation date: November 23, 2016
 https://github.com/sparkfun/SparkFun_MPU9250_DMP_Arduino_Library
-This example sketch demonstrates how to initialize the 
+This example sketch demonstrates how to initialize the
 MPU-9250, and stream its sensor outputs to a serial monitor.
 Development environment specifics:
 Arduino IDE 1.6.12
@@ -15,40 +14,36 @@ Supported Platforms:
 - ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
 *************************************************************/
 
-Attitude attitude;
+static Controls controls;
 
-void setup() 
+#define LOOP_DELAY_MS 50
+
+void setup()
 {
+  Orientation initialOrientation;
+  
   Wire.begin();
   Serial.begin(38400);
-  attitude.init();
+  controls.InitializeMotors();
 
-  delay(50);
-}
-
-void loop() 
-{
-  double pitch, roll, yaw;
+  // TODO some button press to begin 5- second MPU calibration
   
-  attitude.getUpdatedAxes(&pitch, &roll, &yaw);
+  Serial.println("Initialized. Calibrating MPU..");
+  controls.CalibateMPU9250();
 
-  printAxes(pitch, roll, yaw);
+  // TODO some button press to begin 15-second magnetometer calibration
+  Serial.println("Calibrating AK8963...");
+  controls.CalibateAK8963();
 
-  delay(10);
+  delay(LOOP_DELAY_MS);
 }
 
-void printAxes(double pitch, double roll, double yaw)
+void loop()
 {
-  Serial.print("Pitch: ");
-  Serial.print(pitch); 
-  Serial.print("\t");
-  
-  Serial.print("Roll: ");
-  Serial.print(roll); 
-  Serial.print("\t");
+  // TODO currently this prints out values sent to motors. Set PRINT_MOTOR_VALUES to 0 in controls.h to turn off.
+  controls.Stabilize();
 
-  Serial.print("Yaw: ");
-  Serial.print(yaw); 
-  Serial.print("\r\n");
+  // TODO update controls.setDesiredOrientation() here, according to either
+  // thumbstick input or route planning data
+  delay(LOOP_DELAY_MS);
 }
-
