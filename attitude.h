@@ -5,6 +5,8 @@
 
 #define RESTRICT_PITCH // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
 
+#define PRINT_ORIENTATION 0 // Set to 1 to print out orientation after each update
+
 typedef struct Orientation {
   double pitch;
   double roll;
@@ -16,7 +18,7 @@ class Attitude
 private:
 	// IMU instance
 	MPU9250 imu;
-
+  
 	// Kalman filter instances
 	Kalman kalmanX;
 	Kalman kalmanY;

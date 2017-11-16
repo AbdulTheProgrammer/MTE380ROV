@@ -56,6 +56,10 @@ bool Attitude::calibrateMPU9250(void)
     // Check if the IMU is upside down
     imu.readAccelData(imu.accelCount);  // Read the x/y/z adc values
     isInitUpsideDown = (imu.accelCount[2] < 0) ? true : false;
+    
+    // Get sensor resolutions, only need to do this once
+    imu.getAres();
+    imu.getGres();
 
     return true;
 }
@@ -92,10 +96,7 @@ bool Attitude::calibrateAK8963(void)
     Serial.println(imu.factoryMagCalibration[2], 2);
     
     // Get sensor resolutions, only need to do this once
-    imu.getAres();
-    imu.getGres();
     imu.getMres();
-
 
     // The next call delays for 4 seconds, and then records about 15 seconds of
     // data to calculate bias and scale.
@@ -139,6 +140,15 @@ void Attitude::getUpdatedOrientation(Orientation &inOrientation)
     inOrientation.pitch = filteredOrientation.pitch;
     inOrientation.roll  = filteredOrientation.roll;
     inOrientation.yaw   = filteredOrientation.yaw; 
+
+#if PRINT_ORIENTATION
+    Serial.print("Pitch: ");
+    Serial.print(filteredOrientation.pitch);
+    Serial.print("\tRoll: ");
+    Serial.print(filteredOrientation.roll);
+    Serial.print("\tYaw: ");
+    Serial.println(filteredOrientation.yaw);
+#endif
 }
 
 void Attitude::updateKalmanFilters(void)

@@ -5,6 +5,7 @@
 #define MOTOR_MIN              (0 + MOTOR_LIMIT_MARGIN)
 #define MOTOR_MAX              (180 - MOTOR_LIMIT_MARGIN)
 #define MOTOR_NEUTRAL          ((MOTOR_MAX + MOTOR_MIN)/2)
+#define MOTOR_CONSTRAIN(X)     (min(max((X), MOTOR_MIN), MOTOR_MAX))
 
 #define PID_SAMPLE_TIME_MS (20)
 #define PID_OUTPUT_MAX     (MOTOR_MAX - MOTOR_NEUTRAL)
@@ -28,86 +29,130 @@ static int PORTBC = 11;
 static int PORTFR = 9;
 static int PORTFL = 10;
 
-Controls::Controls(void) :   pitchPID(&input.pitch, &output.pitch, &setPoint.pitch, PID_PITCH_KP, PID_PITCH_KI, PID_PITCH_KD, DIRECT),
-  rollPID(&input.roll, &output.roll, &setPoint.roll, PID_ROLL_KP, PID_ROLL_KI, PID_ROLL_KD, DIRECT),
-  yawPID(&input.yaw, &output.yaw, &setPoint.yaw, PID_YAW_KP, PID_YAW_KI, PID_YAW_KD, DIRECT),
-  attitude()
+Controls::Controls(void) :   _pitchPID(&_sensorsInput.pitch, &_PIDOutput.pitch, &_setPoint.pitch, PID_PITCH_KP, PID_PITCH_KI, PID_PITCH_KD, DIRECT),
+  _rollPID(&_sensorsInput.roll, &_PIDOutput.roll, &_setPoint.roll, PID_ROLL_KP, PID_ROLL_KI, PID_ROLL_KD, DIRECT),
+  _yawPID(&_sensorsInput.yaw, &_PIDOutput.yaw, &_setPoint.yaw, PID_YAW_KP, PID_YAW_KI, PID_YAW_KD, DIRECT),
+  _attitude()
 {
-  // Init setPoint (xr), input (x) and output (u) to 0
-  setPoint.pitch = input.pitch = output.pitch  = 0;
-  setPoint.roll  = input.roll  = output.roll   = 0;
-  setPoint.yaw   = input.yaw   = output.yaw    = 0;
+  // Init _setPoint (xr), input (x) and output (u) to 0
+  _setPoint.pitch = _sensorsInput.pitch = _PIDOutput.pitch  = 0;
+  _setPoint.roll  = _sensorsInput.roll  = _PIDOutput.roll   = 0;
+  _setPoint.yaw   = _sensorsInput.yaw   = _PIDOutput.yaw    = 0;
     
   // Set sample time of PID
-  pitchPID.SetSampleTime(PID_SAMPLE_TIME_MS);
-  rollPID.SetSampleTime(PID_SAMPLE_TIME_MS);
-  yawPID.SetSampleTime(PID_SAMPLE_TIME_MS);
+  _pitchPID.SetSampleTime(PID_SAMPLE_TIME_MS);
+  _rollPID.SetSampleTime(PID_SAMPLE_TIME_MS);
+  _yawPID.SetSampleTime(PID_SAMPLE_TIME_MS);
 
   // Set PID output limits
-  pitchPID.SetOutputLimits(PID_OUTPUT_MIN, PID_OUTPUT_MAX);
-  rollPID.SetOutputLimits(PID_OUTPUT_MIN, PID_OUTPUT_MAX);
-  yawPID.SetOutputLimits(PID_OUTPUT_MIN, PID_OUTPUT_MAX);
+  _pitchPID.SetOutputLimits(PID_OUTPUT_MIN, PID_OUTPUT_MAX);
+  _rollPID.SetOutputLimits(PID_OUTPUT_MIN, PID_OUTPUT_MAX);
+  _yawPID.SetOutputLimits(PID_OUTPUT_MIN, PID_OUTPUT_MAX);
 
   // Set PID control to automatic
-  pitchPID.SetMode(AUTOMATIC);
-  rollPID.SetMode(AUTOMATIC);
-  yawPID.SetMode(AUTOMATIC);
+  _pitchPID.SetMode(AUTOMATIC);
+  _rollPID.SetMode(AUTOMATIC);
+  _yawPID.SetMode(AUTOMATIC);
 }
 
 void Controls::InitializeMotors(void)
 {
   // Attach motor instances to their pins
-  motorBR.attach(PORTBR);
-  motorBL.attach(PORTBL);
-  motorBC.attach(PORTBC);
-  motorFR.attach(PORTFR);
-  motorFL.attach(PORTFL);
+  _motorBR.attach(PORTBR);
+  _motorBL.attach(PORTBL);
+  _motorBC.attach(PORTBC);
+  _motorFR.attach(PORTFR);
+  _motorFL.attach(PORTFL);
 
   delay(MOTOR_STARTUP_DELAY_MS);
 
-  motorBR.write(MOTOR_NEUTRAL);
-  motorBL.write(MOTOR_NEUTRAL);
-  motorBC.write(MOTOR_NEUTRAL);
-  motorFR.write(MOTOR_NEUTRAL);
-  motorFL.write(MOTOR_NEUTRAL);
+  _motorBR.write(MOTOR_NEUTRAL);
+  _motorBL.write(MOTOR_NEUTRAL);
+  _motorBC.write(MOTOR_NEUTRAL);
+  _motorFR.write(MOTOR_NEUTRAL);
+  _motorFL.write(MOTOR_NEUTRAL);
 }
 
-void Controls::CalibateMPU9250(void)
+void Controls::CalibrateAccelGyro(void)
 {
   // Calibrate the MPU
-  attitude.calibrateMPU9250();
+  _attitude.calibrateMPU9250();
 }
 
-void Controls::CalibateAK8963(void)
+void Controls::CalibrateMagnetometer(void)
 {
-  attitude.calibrateAK8963();
+  _attitude.calibrateAK8963();
 }
 
-void Controls::Stabilize(void)
+void Controls::Stabilize(bool inStabilizePitch, bool inStabilizeRoll, bool inStabilizeYaw, bool inStabilizeDepth)
 {
-  // Get newest IMU data on pitch roll and yaw
-  attitude.getUpdatedOrientation(input);
+  GetSensorsInput();
   
-  // Compute new values from the PID loop (saved in the 
-  pitchPID.Compute();
-  rollPID.Compute();
-  yawPID.Compute();
+  CalculatePIDs(inStabilizePitch, inStabilizeRoll, inStabilizeYaw, inStabilizeDepth);
 
-  // Set motors with the new PID output values
-  setMotors();
+  SetNewMotorValues();
 }
 
-void Controls::SetDesiredOrientation(const Orientation &inOrientation)
+void Controls::GetSensorsInput(void)
 {
-  setPoint = inOrientation;
+  Orientation IMUOrientation;
+  
+  // Get newest IMU data on pitch roll and yaw
+  _attitude.getUpdatedOrientation(IMUOrientation);
+
+  // Update internal values for our Spatial State
+  _sensorsInput.pitch  = IMUOrientation.pitch;
+  _sensorsInput.roll   = IMUOrientation.roll;
+  _sensorsInput.yaw    = IMUOrientation.yaw;
+  //TODO get depth from pressure sensor
+  
+  // Note that we have no sensors for thrust
 }
 
-void Controls::GetCurrentOrientation(Orientation &outOrientation)
+void Controls::CalculatePIDs(bool inStabilizePitch, bool inStabilizeRoll, bool inStabilizeYaw, bool inStabilizeDepth)
 {
-  outOrientation = input;
+  // Compute new values from the PID loop, saved automatically in the _PIDOutput struct
+  if (inStabilizePitch)
+  {
+    _pitchPID.Compute();
+  }  
+  else 
+  {
+    _PIDOutput.pitch = 0;
+  }
+  
+  if (inStabilizeRoll)
+  {
+    _rollPID.Compute();
+  }
+
+  else
+  {
+    _PIDOutput.roll = 0;
+  }
+  if (inStabilizeYaw)
+  {
+    _yawPID.Compute();
+  }
+  else
+  {
+    _PIDOutput.yaw = 0;
+  }
+
+  // TODO depth
 }
 
-void Controls::setMotors(void)
+void Controls::SetDesiredSpatialState(SpatialState &inSpatialState)
+{
+  _setPoint = inSpatialState;
+}
+
+void Controls::GetCurrentSpatialState(SpatialState &outSpatialState)
+{
+  outSpatialState = _sensorsInput;
+}
+
+void Controls::SetNewMotorValues(void)
 {
   int motorBRVal, motorBLVal, motorBCVal, motorFRVal, motorFLVal;
 
@@ -119,24 +164,38 @@ void Controls::setMotors(void)
   motorFLVal = MOTOR_NEUTRAL;
 
   // Pitch correction
-  motorBCVal += output.pitch;
-  motorFLVal -= output.pitch/2;
-  motorFRVal -= output.pitch/2;
+  motorBCVal += _PIDOutput.pitch;
+  motorFLVal -= _PIDOutput.pitch/2;
+  motorFRVal -= _PIDOutput.pitch/2;
 
   // Roll correction  
-  motorFLVal += output.roll;
-  motorFRVal -= output.roll;
+  motorFLVal += _PIDOutput.roll;
+  motorFRVal -= _PIDOutput.roll;
 
-  // Yaw correction UNUSED
-  motorBLVal += output.yaw;
-  motorBRVal -= output.yaw;
+  // Yaw correction
+  motorBLVal += _PIDOutput.yaw;
+  motorBRVal -= _PIDOutput.yaw;
 
+  // Add thrust to the back motors
+  
+  motorBRVal += _setPoint.thrust;
+  motorBLVal += _setPoint.thrust;
+
+  // TODO depth
+
+  // Contrain to motor limits
+  motorBRVal = MOTOR_CONSTRAIN(motorBRVal);
+  motorBLVal = MOTOR_CONSTRAIN(motorBLVal);
+  motorBCVal = MOTOR_CONSTRAIN(motorBCVal);
+  motorFRVal = MOTOR_CONSTRAIN(motorFRVal);
+  motorFLVal = MOTOR_CONSTRAIN(motorFLVal);
+  
   // Write to motors
-  motorBC.write(motorBCVal);
-  motorBL.write(motorBLVal);
-  motorBR.write(motorBRVal);
-  motorFL.write(motorFLVal);
-  motorFR.write(motorFRVal);
+  _motorBC.write(motorBCVal);
+  _motorBL.write(motorBLVal);
+  _motorBR.write(motorBRVal);
+  _motorFL.write(motorFLVal);
+  _motorFR.write(motorFRVal);
 
 #if PRINT_MOTOR_VALUES 
   Serial.print("BC: ");
