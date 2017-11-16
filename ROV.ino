@@ -29,11 +29,12 @@ void setup()
   // TODO some button press to begin 5- second MPU calibration
   
   Serial.println("Initialized. Calibrating MPU..");
-  controls.CalibateMPU9250();
+  controls.CalibrateAccelGyro();
 
   // TODO some button press to begin 15-second magnetometer calibration
+  
   Serial.println("Calibrating AK8963...");
-  controls.CalibateAK8963();
+  controls.CalibrateMagnetometer();
 
   delay(LOOP_DELAY_MS);
 }
@@ -41,9 +42,10 @@ void setup()
 void loop()
 {
   // TODO currently this prints out values sent to motors. Set PRINT_MOTOR_VALUES to 0 in controls.h to turn off.
-  controls.Stabilize();
+  controls.Stabilize(true, true, true, false);
 
-  // TODO update controls.setDesiredOrientation() here, according to either
+  // TODO update controls.setDesiredSpatialState() here, according to either
   // thumbstick input or route planning data
+  
   delay(LOOP_DELAY_MS);
 }

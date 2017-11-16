@@ -11,18 +11,22 @@
 class ManualInput
 {
 private:
-  ThumbStick Joystick;//joystick input
-  Controls contr;
-  double* inputYaw;//pointer to controller yaw value
-  double* inputDepth;//pointer to controller depth value 0 to 100
-  double* inputThrust;//pointer to controller yaw value -100 to 100
-  unsigned long lastUpdate;
+  ThumbStick _Joystick;//joystick input
+  Controls _contr;
+  unsigned long _lastUpdate;
 public:
-  //constructor takes in controller setPoint struct values for yaw, thrust and depth
-  ManualInput(double &setPointYaw, double &setPointThrust, double &setPointDepth);
+  ManualInput(void);
 
-  //function that reads joystick values and sets controller input values accordingly
-  void addJoystickInput();
+  /*
+   * \brief  Reads forom Joysticks and maps to yaw, thrust and depth.
+   * 
+   * \param  setPointYawChange - Indicates the amount that the current yaw should change. 
+   *                             Does not take into account current yaw, so the user must calculate
+   *                             the final yaw value by doing nextYaw = (currentYaw + setPointYawChange).
+   * \param  setPointThrust    - New setpoint for thrust. From -100 to 100.
+   * \param  setPointDepth     - New setpoint for depth. From 0 to 100.
+   */
+  void GetJoystickInput(double &setPointYawChange, double &setPointThrust, double &setPointDepth);
 };
 
 #endif

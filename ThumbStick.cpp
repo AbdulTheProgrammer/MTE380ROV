@@ -18,31 +18,31 @@ ThumbStick::ThumbStick(int lxPin, int lyPin, int ldPin, int rxPin, int ryPin, in
     _rdPin = rdPin;
 }
 
-ThumbStick::readLX()
+int ThumbStick::readLX()
 {
     int reading = getMappedValue(analogRead(_lxPin));
     return reading;
 }
 
-ThumbStick::readLY()
+int ThumbStick::readLY()
 {
     int reading = getMappedValue(analogRead(_lyPin));
     return reading;
 }
 
-ThumbStick::readRX()
+int ThumbStick::readRX()
 {
     int reading = getMappedValue(analogRead(_rxPin));
     return reading;
 }
 
-ThumbStick::readRY()
+int ThumbStick::readRY()
 {
     int reading = getMappedValue(analogRead(_ryPin));
     return reading;
 }
 
-ThumbStick::getMappedValue(int sensorVal)
+int ThumbStick::getMappedValue(int sensorVal)
 {
     //map values from -100 to 100
     //dead zone 400 to 500
