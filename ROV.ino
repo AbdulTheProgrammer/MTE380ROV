@@ -33,16 +33,29 @@ void setup()
 
   // TODO some button press to begin 15-second magnetometer calibration
   
-  Serial.println("Calibrating AK8963...");
-  controls.CalibrateMagnetometer();
+  //Serial.println("Calibrating AK8963...");
+  //controls.CalibrateMagnetometer();
+
+  SpatialState sp;
+
+  sp.pitch = 0;
+  sp.roll = 0;
+  sp.yaw = 0;
+  sp.thrust = 0;
+  sp.depth = 25; // Experimental value that keeps it neutrally buoyant
+
+  controls.SetDesiredSpatialState(sp);
 
   delay(LOOP_DELAY_MS);
+
+  Serial.println("Waiting 10 sec to be put into water...");
+  delay(10000);
 }
 
 void loop()
 {
   // TODO currently this prints out values sent to motors. Set PRINT_MOTOR_VALUES to 0 in controls.h to turn off.
-  controls.Stabilize(true, true, true, false);
+  controls.Stabilize(true, true, false, true);
 
   // TODO update controls.setDesiredSpatialState() here, according to either
   // thumbstick input or route planning data

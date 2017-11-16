@@ -13,15 +13,22 @@
 
 #define PID_PITCH_KP 1
 #define PID_PITCH_KI 0
-#define PID_PITCH_KD 0
+#define PID_PITCH_KD 0 //0.015 // makes it more stable, but it starts spinning bc the BC motor is tilted. Needs yaw correction.
 
 #define PID_ROLL_KP  1
 #define PID_ROLL_KI  0
-#define PID_ROLL_KD  0
+#define PID_ROLL_KD  0 //0.015 // makes it more stable, but it starts spinning bc the BC motor is tilted. Needs yaw correction.
 
 #define PID_YAW_KP   1
 #define PID_YAW_KI   0
 #define PID_YAW_KD   0
+
+#define MOTOR_BR_REVERSED 0 // Needs checking TODO
+#define MOTOR_BL_REVERSED 0 // Needs checking
+#define MOTOR_BC_REVERSED 1
+#define MOTOR_FR_REVERSED 0
+#define MOTOR_FL_REVERSED 0
+
 
 static int PORTBR = 13;
 static int PORTBL = 12;
@@ -181,7 +188,10 @@ void Controls::SetNewMotorValues(void)
   motorBRVal += _setPoint.thrust;
   motorBLVal += _setPoint.thrust;
 
-  // TODO depth
+  // TODO depth properly, pass through PID and pressure sensor
+  // For now just add it to the motor values
+  motorFRVal += _setPoint.depth;
+  motorFLVal += _setPoint.depth;
 
   // Contrain to motor limits
   motorBRVal = MOTOR_CONSTRAIN(motorBRVal);
@@ -189,6 +199,13 @@ void Controls::SetNewMotorValues(void)
   motorBCVal = MOTOR_CONSTRAIN(motorBCVal);
   motorFRVal = MOTOR_CONSTRAIN(motorFRVal);
   motorFLVal = MOTOR_CONSTRAIN(motorFLVal);
+
+  // Check if the props are installed in reverse
+  motorBRVal = (MOTOR_BR_REVERSED) ? (MOTOR_NEUTRAL*2 - motorBRVal) : motorBRVal;
+  motorBLVal = (MOTOR_BL_REVERSED) ? (MOTOR_NEUTRAL*2 - motorBLVal) : motorBLVal;
+  motorBCVal = (MOTOR_BC_REVERSED) ? (MOTOR_NEUTRAL*2 - motorBCVal) : motorBCVal;
+  motorFRVal = (MOTOR_FR_REVERSED) ? (MOTOR_NEUTRAL*2 - motorFRVal) : motorFRVal;
+  motorFLVal = (MOTOR_FL_REVERSED) ? (MOTOR_NEUTRAL*2 - motorFLVal) : motorFLVal;
   
   // Write to motors
   _motorBC.write(motorBCVal);
