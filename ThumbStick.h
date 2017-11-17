@@ -7,6 +7,9 @@
  #ifndef ThumbStick_h
  #define ThumbStick_h
 
+#define THUMBSTICK_ANALOG_OUTPUT_MAX (100)
+#define THUMBSTICK_ANALOG_OUTPUT_MIN (-100)
+
  #include "Arduino.h"
 
  class ThumbStick

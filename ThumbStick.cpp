@@ -61,11 +61,11 @@ int ThumbStick::getMappedValue(int sensorVal)
     //map values from -100 to 100
     int mappedVal = 0;
     if(sensorVal > DEAD_ZONE_HIGH){
-        mappedVal = map(sensorVal, DEAD_ZONE_HIGH, 1023, 0, 100);
+        mappedVal = map(sensorVal, DEAD_ZONE_HIGH, 1023, 0, THUMBSTICK_ANALOG_OUTPUT_MAX);
     }
     else if (sensorVal < DEAD_ZONE_LOW)
     {
-        mappedVal = map(sensorVal, DEAD_ZONE_LOW, 0, 0, -100);
+        mappedVal = map(sensorVal, DEAD_ZONE_LOW, 0, 0, THUMBSTICK_ANALOG_OUTPUT_MIN);
     }
     
     return mappedVal;

@@ -62,24 +62,6 @@ Controls::Controls(void) :   _pitchPID(&_sensorsInput.pitch, &_PIDOutput.pitch, 
   _yawPID.SetMode(AUTOMATIC);
 }
 
-void Controls::InitializeMotors(void)
-{
-  // Attach motor instances to their pins
-  _motorBR.attach(PORTBR);
-  _motorBL.attach(PORTBL);
-  _motorBC.attach(PORTBC);
-  _motorFR.attach(PORTFR);
-  _motorFL.attach(PORTFL);
-
-  delay(MOTOR_STARTUP_DELAY_MS);
-
-  _motorBR.write(MOTOR_NEUTRAL);
-  _motorBL.write(MOTOR_NEUTRAL);
-  _motorBC.write(MOTOR_NEUTRAL);
-  _motorFR.write(MOTOR_NEUTRAL);
-  _motorFL.write(MOTOR_NEUTRAL);
-}
-
 void Controls::CalibrateAccelGyro(void)
 {
   // Calibrate the MPU
@@ -159,6 +141,11 @@ void Controls::GetCurrentSpatialState(SpatialState &outSpatialState)
   outSpatialState = _sensorsInput;
 }
 
+void Controls::GetCurrentSetpoint(SpatialState &outSpatialState)
+{
+  outSpatialState = _setPoint;
+}
+
 void Controls::SetNewMotorValues(void)
 {
   int motorBRVal, motorBLVal, motorBCVal, motorFRVal, motorFLVal;
@@ -226,5 +213,36 @@ void Controls::SetNewMotorValues(void)
   Serial.print("\tFR: ");
   Serial.println(motorFRVal);
 #endif //PRINT_MOTOR_VALUES
+}
+
+void Controls::Start(void)
+{
+    // Attach motor instances to their pins
+  _motorBR.attach(PORTBR);
+  _motorBL.attach(PORTBL);
+  _motorBC.attach(PORTBC);
+  _motorFR.attach(PORTFR);
+  _motorFL.attach(PORTFL);
+
+  delay(MOTOR_STARTUP_DELAY_MS);
+
+  _motorBR.write(MOTOR_NEUTRAL);
+  _motorBL.write(MOTOR_NEUTRAL);
+  _motorBC.write(MOTOR_NEUTRAL);
+  _motorFR.write(MOTOR_NEUTRAL);
+  _motorFL.write(MOTOR_NEUTRAL);
+
+  // Set current yaw as 0
+  _attitude.ZeroYaw();
+  
+}
+
+void Controls::Stop(void)
+{
+  _motorBC.write(MOTOR_NEUTRAL);
+  _motorBL.write(MOTOR_NEUTRAL);
+  _motorBR.write(MOTOR_NEUTRAL);
+  _motorFL.write(MOTOR_NEUTRAL);
+  _motorFR.write(MOTOR_NEUTRAL);
 }
 
