@@ -25,8 +25,6 @@
       int _rxPin;
       int _ryPin;
       int _rdPin;
-      const int _deadzoneLow = 400;
-      const int _deadzoneHigh = 500;
       int getMappedValue(int sensorVal);
  };
 

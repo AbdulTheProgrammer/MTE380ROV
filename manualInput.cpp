@@ -2,11 +2,11 @@
 
 #include "manualInput.h"
 
-#define LX_PIN 1
-#define LY_PIN 2
+#define LX_PIN A0 // 1
+#define LY_PIN A1 // 2
 #define LD_PIN 3
-#define RX_PIN 4
-#define RY_PIN 5
+#define RX_PIN A2 // 4
+#define RY_PIN A3 // 5
 #define RD_PIN 6
 
 #define MIN_UPDATE_TIME_US 100*1000
@@ -24,10 +24,11 @@ ManualInput::ManualInput(void) :
 
 void ManualInput::GetJoystickInput(double &setPointYawChange, double &setPointThrust, double &setPointDepth)
 {
-  int lx = _Joystick.readLX();
-  int ly = _Joystick.readLY();
-  int rx = _Joystick.readRX();
-  int ry = _Joystick.readRY();
+  // Read values in the orientation of our setup
+  int rx = _Joystick.readLX();
+  int ry = _Joystick.readLY();
+  int ly = _Joystick.readRX();
+  int lx = - _Joystick.readRY();
 
   //set motor values based on -100 to 100 scale of values
   //THURST

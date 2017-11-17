@@ -3,6 +3,12 @@
 #include "Arduino.h"
 #include "ThumbStick.h"
 
+#define THUMBSTICK_RANGE         (1023)
+#define THUMBSTICK_NEUTRAL_VALUE (THUMBSTICK_RANGE/2)
+
+#define DEAD_ZONE_SIZE (30)
+#define DEAD_ZONE_HIGH (THUMBSTICK_NEUTRAL_VALUE + DEAD_ZONE_SIZE/2)
+#define DEAD_ZONE_LOW  (THUMBSTICK_NEUTRAL_VALUE - DEAD_ZONE_SIZE/2)
 
 ThumbStick::ThumbStick(int lxPin, int lyPin, int ldPin, int rxPin, int ryPin, int rdPin)
 {
@@ -45,14 +51,13 @@ int ThumbStick::readRY()
 int ThumbStick::getMappedValue(int sensorVal)
 {
     //map values from -100 to 100
-    //dead zone 400 to 500
     int mappedVal = 0;
-    if(sensorVal > _deadzoneHigh){
-        mappedVal = map(sensorVal, _deadzoneHigh, 1023, 0, 100);
+    if(sensorVal > DEAD_ZONE_HIGH){
+        mappedVal = map(sensorVal, DEAD_ZONE_HIGH, 1023, 0, 100);
     }
-    else if (sensorVal < _deadzoneLow)
+    else if (sensorVal < DEAD_ZONE_LOW)
     {
-        mappedVal = map(sensorVal, _deadzoneLow, 0, 0, -100);
+        mappedVal = map(sensorVal, DEAD_ZONE_LOW, 0, 0, -100);
     }
     
     return mappedVal;

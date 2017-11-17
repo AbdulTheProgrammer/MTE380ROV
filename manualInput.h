@@ -12,7 +12,6 @@ class ManualInput
 {
 private:
   ThumbStick _Joystick;//joystick input
-  Controls _contr;
   unsigned long _lastUpdate;
 public:
   ManualInput(void);
