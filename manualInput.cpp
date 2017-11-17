@@ -2,12 +2,12 @@
 
 #include "manualInput.h"
 
-#define LX_PIN A0 // 1
-#define LY_PIN A1 // 2
-#define LD_PIN 3
-#define RX_PIN A2 // 4
-#define RY_PIN A3 // 5
-#define RD_PIN 6
+#define LX_PIN A0 
+#define LY_PIN A1 
+#define LD_PIN 16
+#define RX_PIN A2 
+#define RY_PIN A3 
+#define RD_PIN 17
 
 #define MIN_UPDATE_TIME_US 100*1000
 #define MIN_UPDATE_FREQ_HZ (1000000/MIN_UPDATE_TIME_US)
@@ -29,7 +29,7 @@ void ManualInput::GetJoystickInput(double &setPointYawChange, double &setPointTh
   int ry = _Joystick.readLY();
   int ly = _Joystick.readRX();
   int lx = - _Joystick.readRY();
-
+  
   //set motor values based on -100 to 100 scale of values
   //THURST
   setPointThrust = ly;
@@ -49,3 +49,11 @@ void ManualInput::GetJoystickInput(double &setPointYawChange, double &setPointTh
   //DEPTH
   setPointDepth = map(ry, -100, 100, 0, 100);
 }
+
+void ManualInput::GetButtonPresses(bool &left, bool &right)
+{
+  left = _Joystick.readLD();
+  right = _Joystick.readRD();
+}
+
+

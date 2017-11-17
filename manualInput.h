@@ -13,6 +13,7 @@ class ManualInput
 private:
   ThumbStick _Joystick;//joystick input
   unsigned long _lastUpdate;
+  
 public:
   ManualInput(void);
 
@@ -26,6 +27,12 @@ public:
    * \param  setPointDepth     - New setpoint for depth. From 0 to 100.
    */
   void GetJoystickInput(double &setPointYawChange, double &setPointThrust, double &setPointDepth);
+
+  /*
+   * \brief  Reads button presses from the joysticks.
+   */
+  void GetButtonPresses(bool &left, bool &right);
+
 };
 
 #endif

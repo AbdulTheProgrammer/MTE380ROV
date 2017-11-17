@@ -12,8 +12,8 @@
 
 ThumbStick::ThumbStick(int lxPin, int lyPin, int ldPin, int rxPin, int ryPin, int rdPin)
 {
-    pinMode(rdPin, INPUT);
-    pinMode(ldPin, INPUT);
+    pinMode(rdPin, INPUT_PULLUP);
+    pinMode(ldPin, INPUT_PULLUP);
 
     _lxPin = lxPin;
     _lyPin = lyPin;
@@ -26,26 +26,34 @@ ThumbStick::ThumbStick(int lxPin, int lyPin, int ldPin, int rxPin, int ryPin, in
 
 int ThumbStick::readLX()
 {
-    int reading = getMappedValue(analogRead(_lxPin));
-    return reading;
+    return getMappedValue(analogRead(_lxPin));
 }
 
 int ThumbStick::readLY()
 {
-    int reading = getMappedValue(analogRead(_lyPin));
-    return reading;
+    return getMappedValue(analogRead(_lyPin));
 }
 
 int ThumbStick::readRX()
 {
-    int reading = getMappedValue(analogRead(_rxPin));
-    return reading;
+    return getMappedValue(analogRead(_rxPin));
 }
 
 int ThumbStick::readRY()
 {
-    int reading = getMappedValue(analogRead(_ryPin));
-    return reading;
+    return getMappedValue(analogRead(_ryPin));
+}
+
+bool ThumbStick::readLD()
+{
+  // Active low
+  return !digitalRead(_ldPin);
+}
+
+bool ThumbStick::readRD()
+{
+  // Active low
+  return !digitalRead(_rdPin);
 }
 
 int ThumbStick::getMappedValue(int sensorVal)

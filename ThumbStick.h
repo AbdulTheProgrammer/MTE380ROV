@@ -17,6 +17,8 @@
       int readLY();
       int readRX();
       int readRY();
+      bool readLD();
+      bool readRD();
 
     private:
       int _lxPin;
