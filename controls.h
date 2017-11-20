@@ -45,11 +45,6 @@ class Controls
   Controls(void);
 
   /*!
-   * \brief   Initializes all motors. IMU will be initialized when the CalibrateXXX() functions are called.
-   */
-  void InitializeMotors(void);
-
-  /*!
    * \brief   Starts and calibrates the accelerometer and gyro. 
    * 
    * \details This should be called when the IMU is completely upright on a flat surface.
@@ -81,7 +76,20 @@ class Controls
    *                            The struct must be allocated prior to calling this function.
    */
   void GetCurrentSpatialState(SpatialState &outSpatialState);
-   
+
+    /*!
+   * \brief   Gets the current orientation setpoint of the IMU.
+   * 
+   * \param   outSpatialState - Struct to hold current spatial state setpoint.
+   *                            The struct must be allocated prior to calling this function.
+   */
+  void GetCurrentSetpoint(SpatialState &outSpatialState);
+
+  /*
+   * \brief   Starts all controls. Stabilize() chould be called often after this to continuously stabilize the ROV.
+   */
+  void Start();   
+  
   /*!
    * \brief   Function that performs the control loop and stabilizes the system. 
    * 
@@ -93,4 +101,9 @@ class Controls
    * \param   stabilizeDepth - Set to true if the controller should stabilize depth.
    */
   void Stabilize(bool stabilizePitch, bool stabilizeRoll, bool stabilizeYaw, bool stabilizeDepth);
+
+  /*
+   * \brief   Stops all controls. Should only be called in emergency stops or when shutting down.
+   */
+  void Stop();
 };

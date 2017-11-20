@@ -3,11 +3,17 @@
 #include "Arduino.h"
 #include "ThumbStick.h"
 
+#define THUMBSTICK_RANGE         (1023)
+#define THUMBSTICK_NEUTRAL_VALUE (THUMBSTICK_RANGE/2)
+
+#define DEAD_ZONE_SIZE (30)
+#define DEAD_ZONE_HIGH (THUMBSTICK_NEUTRAL_VALUE + DEAD_ZONE_SIZE/2)
+#define DEAD_ZONE_LOW  (THUMBSTICK_NEUTRAL_VALUE - DEAD_ZONE_SIZE/2)
 
 ThumbStick::ThumbStick(int lxPin, int lyPin, int ldPin, int rxPin, int ryPin, int rdPin)
 {
-    pinMode(rdPin, INPUT);
-    pinMode(ldPin, INPUT);
+    pinMode(rdPin, INPUT_PULLUP);
+    pinMode(ldPin, INPUT_PULLUP);
 
     _lxPin = lxPin;
     _lyPin = lyPin;
@@ -20,39 +26,46 @@ ThumbStick::ThumbStick(int lxPin, int lyPin, int ldPin, int rxPin, int ryPin, in
 
 int ThumbStick::readLX()
 {
-    int reading = getMappedValue(analogRead(_lxPin));
-    return reading;
+    return getMappedValue(analogRead(_lxPin));
 }
 
 int ThumbStick::readLY()
 {
-    int reading = getMappedValue(analogRead(_lyPin));
-    return reading;
+    return getMappedValue(analogRead(_lyPin));
 }
 
 int ThumbStick::readRX()
 {
-    int reading = getMappedValue(analogRead(_rxPin));
-    return reading;
+    return getMappedValue(analogRead(_rxPin));
 }
 
 int ThumbStick::readRY()
 {
-    int reading = getMappedValue(analogRead(_ryPin));
-    return reading;
+    return getMappedValue(analogRead(_ryPin));
+}
+
+bool ThumbStick::readLD()
+{
+  // Active low
+  return !digitalRead(_ldPin);
+}
+
+bool ThumbStick::readRD()
+{
+  // Active low
+  return !digitalRead(_rdPin);
 }
 
 int ThumbStick::getMappedValue(int sensorVal)
 {
     //map values from -100 to 100
-    //dead zone 400 to 500
     int mappedVal = 0;
-    if(sensorVal > _deadzoneHigh){
-        mappedVal = map(sensorVal, _deadzoneHigh, 1023, 0, 100);
+    if(sensorVal > DEAD_ZONE_HIGH){
+        mappedVal = map(sensorVal, DEAD_ZONE_HIGH, 1023, 0, THUMBSTICK_ANALOG_OUTPUT_MAX);
     }
-    else if (sensorVal < _deadzoneLow)
+    else if (sensorVal < DEAD_ZONE_LOW)
     {
-        mappedVal = map(sensorVal, _deadzoneLow, 0, 0, -100);
+        mappedVal = map(sensorVal, DEAD_ZONE_LOW, 0, 0, THUMBSTICK_ANALOG_OUTPUT_MIN);
     }
     
     return mappedVal;

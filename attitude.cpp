@@ -119,13 +119,16 @@ bool Attitude::calibrateAK8963(void)
     Serial.print("Z-Axis sensitivity adjustment value ");
     Serial.println(imu.factoryMagCalibration[2], 2);
 
+    return true;
+}
+
+void Attitude::ZeroYaw(void)
+{
     // Get initial IMU data
     updateRawOrientation();
 
     // Set the current yaw as the new yaw offset
-    yaw_offset = rawOrientation.yaw;
-
-    return true;
+    yaw_offset += rawOrientation.yaw;
 }
 
 void Attitude::getUpdatedOrientation(Orientation &inOrientation)

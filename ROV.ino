@@ -1,4 +1,5 @@
 #include "controls.h"
+#include "manualInput.h"
 /************************************************************
 MPU9250_Basic
 Basic example sketch for MPU-9250 DMP Arduino Library
@@ -15,6 +16,7 @@ Supported Platforms:
 *************************************************************/
 
 static Controls controls;
+static ManualInput manInput;
 
 #define LOOP_DELAY_MS 50
 
@@ -24,28 +26,52 @@ void setup()
   
   Wire.begin();
   Serial.begin(38400);
-  controls.InitializeMotors();
 
-  // TODO some button press to begin 5- second MPU calibration
-  
-  Serial.println("Initialized. Calibrating MPU..");
+  Serial.println("Initialized. Waiting for button press to calibrate MPU..");
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
   controls.CalibrateAccelGyro();
 
-  // TODO some button press to begin 15-second magnetometer calibration
-  
-  Serial.println("Calibrating AK8963...");
+  Serial.println("Waiting for button press to calibrate AK8963...");
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
   controls.CalibrateMagnetometer();
 
-  delay(LOOP_DELAY_MS);
+  Serial.println("Waiting for both button presses when ROV is in water..");
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Both);
+  controls.Start();
 }
 
 void loop()
 {
-  // TODO currently this prints out values sent to motors. Set PRINT_MOTOR_VALUES to 0 in controls.h to turn off.
-  controls.Stabilize(true, true, true, false);
+  bool leftButtonPressed, rightButtonPressed;
+  double yawChange = 0, thrust = 0, depthChange = 0;
+  SpatialState sp;
 
-  // TODO update controls.setDesiredSpatialState() here, according to either
-  // thumbstick input or route planning data
+  // Stabilize the ROV through the control loop stack
+  controls.Stabilize(true, true, true, true);
+
+  // Get manual inputs
+  manInput.GetJoystickInput(yawChange, thrust, depthChange);
+
+//  Serial.print(yawChange);
+//  Serial.print("\t");
+//  Serial.print(thrust);
+//  Serial.print("\t");
+//  Serial.println(depthChange);
+
+  // Update controls setpoint
+  controls.GetCurrentSetpoint(sp);
+  sp.yaw   += yawChange;
+  sp.thrust = thrust;
+  sp.depth  = depthChange*200 + 25; // TODO this should be +=, but since we dont have pressure sensor, we are just sending this value to the motors
+  controls.SetDesiredSpatialState(sp);
+
+  // Check e-stop
+  manInput.GetButtonPresses(leftButtonPressed, rightButtonPressed);
+  if (leftButtonPressed && rightButtonPressed)
+  {
+    controls.Stop();
+    while(1);
+  }
   
   delay(LOOP_DELAY_MS);
 }

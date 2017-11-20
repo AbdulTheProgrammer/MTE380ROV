@@ -7,6 +7,9 @@
  #ifndef ThumbStick_h
  #define ThumbStick_h
 
+#define THUMBSTICK_ANALOG_OUTPUT_MAX (100)
+#define THUMBSTICK_ANALOG_OUTPUT_MIN (-100)
+
  #include "Arduino.h"
 
  class ThumbStick
@@ -17,6 +20,8 @@
       int readLY();
       int readRX();
       int readRY();
+      bool readLD();
+      bool readRD();
 
     private:
       int _lxPin;
@@ -25,8 +30,6 @@
       int _rxPin;
       int _ryPin;
       int _rdPin;
-      const int _deadzoneLow = 400;
-      const int _deadzoneHigh = 500;
       int getMappedValue(int sensorVal);
  };
 

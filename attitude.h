@@ -69,4 +69,9 @@ public:
    * \brief   Gets the current (filtered) orientation of the IMU.
    */
 	void getUpdatedOrientation(Orientation &inOrientation);
+
+  /*!
+   * \brief   Zeros the current yaw position.
+   */
+  void ZeroYaw(void);
 };
