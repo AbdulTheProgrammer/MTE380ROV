@@ -18,7 +18,7 @@
 #define MAX_ROTATION_SPEED_DEG_PER_SEC (15)
 #define MAX_ROTATION_PER_UPDATE ((double)MAX_ROTATION_SPEED_DEG_PER_SEC / MIN_UPDATE_FREQ_HZ)
 
-#define MAX_DEPTH_CHANGE_PER_SEC (5)
+#define MAX_DEPTH_CHANGE_PER_SEC (50)
 #define MAX_DEPTH_CHANGE_PER_UPDATE ((double)MAX_DEPTH_CHANGE_PER_SEC / MIN_UPDATE_FREQ_HZ)
 
 
@@ -31,10 +31,10 @@ ManualInput::ManualInput(void) :
 void ManualInput::GetJoystickInput(double &setPointYawChange, double &setPointThrust, double &setPointDepthChange)
 {
   // Read values in the orientation of our setup
-  int rx = _Joystick.readLX();
-  int ry = _Joystick.readLY();
-  int ly = _Joystick.readRX();
-  int lx = - _Joystick.readRY();
+  int lx = _Joystick.readLX();
+  int ly = -_Joystick.readLY();
+  int ry = _Joystick.readRX();
+  int rx = _Joystick.readRY();
 
   // Get time difference between past call to this function
   unsigned long Now = micros();
@@ -45,7 +45,7 @@ void ManualInput::GetJoystickInput(double &setPointYawChange, double &setPointTh
 
   // Increment yaw and depth
   setPointYawChange   = (((double)rx/THUMBSTICK_ANALOG_OUTPUT_MAX) * MAX_ROTATION_SPEED_DEG_PER_SEC) * ((double)timeDiff / USEC_PER_SEC);
-  setPointDepthChange = (((double)ry/THUMBSTICK_ANALOG_OUTPUT_MAX) * MAX_DEPTH_CHANGE_PER_UPDATE) * ((double)timeDiff / USEC_PER_SEC);
+  setPointDepthChange = (((double)ry/THUMBSTICK_ANALOG_OUTPUT_MAX) * MAX_DEPTH_CHANGE_PER_SEC) * ((double)timeDiff / USEC_PER_SEC);
 
   // Log update time
   _lastUpdate = Now;

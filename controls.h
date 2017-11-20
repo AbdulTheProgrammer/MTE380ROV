@@ -49,9 +49,7 @@ class Controls
   void SetNewMotorValues(void);
   void CalculatePIDs(bool inStabilizePitch, bool inStabilizeRoll, bool inStabilizeYaw, bool inStabilizeDepth);
   void GetSensorsInput(void);
-  //TODO need to tweak this TEMPORARY
-  inline double PressureToDepth(double absPressure) {  return 0.1222*abs(_basePressure - absPressure); }
-  double getUpdatedDepthChange();
+  double GetDepth(void);
   
  public:
   Controls(void);
@@ -64,7 +62,7 @@ class Controls
    */
   void CalibrateAccelGyro(void);
 
-    /*!
+  /*!
    * \brief   Starts and calibrates the magnetometer.
    *
    * \details Following this call will be a calibration for 15 seconds.
@@ -73,6 +71,12 @@ class Controls
    *          is calibrated as the 0-yaw position.
    */
   void CalibrateMagnetometer(void);
+
+  
+  /*
+   * \brief  Calibrates pressure sensor with baseline pressure (just below top surface of water)
+   */
+  void CalibratePressureSensor(void);
 
   /*!
    * \brief   Sets the desired orientation for the IMU.
@@ -114,10 +118,6 @@ class Controls
    */
   void Stabilize(bool stabilizePitch, bool stabilizeRoll, bool stabilizeYaw, bool stabilizeDepth);
 
-  /*
-  * Calibrates pressure sensor with baseline pressure (representing top surface of water)
-  */
-  void calibratePressureSensor();
   /*
    * \brief   Stops all controls. Should only be called in emergency stops or when shutting down.
    */

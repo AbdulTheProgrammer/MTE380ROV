@@ -1,6 +1,6 @@
 #include "controls.h"
 
-#define MOTOR_STARTUP_DELAY_MS (1000)
+#define MOTOR_STARTUP_DELAY_MS (2000)
 #define MOTOR_LIMIT_MARGIN     (20)
 #define MOTOR_MIN              (0 + MOTOR_LIMIT_MARGIN)
 #define MOTOR_MAX              (180 - MOTOR_LIMIT_MARGIN)
@@ -37,6 +37,7 @@
 #define MOTOR_FR_REVERSED 0
 #define MOTOR_FL_REVERSED 0
 
+#define PRESSURE_TO_DEPTH_M 0.1019  //0.1222
 
 static int PORTBR = 13;
 static int PORTBL = 12;
@@ -44,10 +45,12 @@ static int PORTBC = 11;
 static int PORTFR = 9;
 static int PORTFL = 10;
 
-Controls::Controls(void) :   _pitchPID(&_sensorsInput.pitch, &_PIDOutput.pitch, &_setPoint.pitch, PID_PITCH_KP, PID_PITCH_KI, PID_PITCH_KD, DIRECT),
-  _rollPID(&_sensorsInput.roll, &_PIDOutput.roll, &_setPoint.roll, PID_ROLL_KP, PID_ROLL_KI, PID_ROLL_KD, DIRECT),
-  _yawPID(&_sensorsInput.yaw, &_PIDOutput.yaw, &_setPoint.yaw, PID_YAW_KP, PID_YAW_KI, PID_YAW_KD, DIRECT),
-  _depthPID(&_sensorsInput.depth, &_PIDOutput.depth, &_setPoint.depth, PID_DEPTH_KP, PID_DEPTH_KI, PID_DEPTH_KD, DIRECT), _pSensor(ADDRESS_HIGH),
+Controls::Controls(void) :   
+  _pitchPID(&_sensorsInput.pitch, &_PIDOutput.pitch, &_setPoint.pitch, PID_PITCH_KP, PID_PITCH_KI, PID_PITCH_KD, DIRECT),
+  _rollPID (&_sensorsInput.roll,  &_PIDOutput.roll,  &_setPoint.roll,  PID_ROLL_KP,  PID_ROLL_KI,  PID_ROLL_KD,  DIRECT),
+  _yawPID  (&_sensorsInput.yaw,   &_PIDOutput.yaw,   &_setPoint.yaw,   PID_YAW_KP,   PID_YAW_KI,   PID_YAW_KD,   DIRECT),
+  _depthPID(&_sensorsInput.depth, &_PIDOutput.depth, &_setPoint.depth, PID_DEPTH_KP, PID_DEPTH_KI, PID_DEPTH_KD, REVERSE), 
+  _pSensor(ADDRESS_HIGH),
   _attitude()
 {
   // Init _setPoint (xr), input (x) and output (u) to 0
@@ -59,16 +62,13 @@ Controls::Controls(void) :   _pitchPID(&_sensorsInput.pitch, &_PIDOutput.pitch, 
   _pitchPID.SetSampleTime(PID_SAMPLE_TIME_MS);
   _rollPID.SetSampleTime(PID_SAMPLE_TIME_MS);
   _yawPID.SetSampleTime(PID_SAMPLE_TIME_MS);
+  _depthPID.SetSampleTime(PID_SAMPLE_TIME_MS);
 
   // Set PID output limits
   _pitchPID.SetOutputLimits(PID_OUTPUT_MIN, PID_OUTPUT_MAX);
   _rollPID.SetOutputLimits(PID_OUTPUT_MIN, PID_OUTPUT_MAX);
   _yawPID.SetOutputLimits(PID_OUTPUT_MIN, PID_OUTPUT_MAX);
-
-  // Set PID control to automatic
-  _pitchPID.SetMode(AUTOMATIC);
-  _rollPID.SetMode(AUTOMATIC);
-  _yawPID.SetMode(AUTOMATIC);
+  _depthPID.SetOutputLimits(PID_OUTPUT_MIN, PID_OUTPUT_MAX);
 }
 
 void Controls::CalibrateAccelGyro(void)
@@ -94,19 +94,15 @@ void Controls::Stabilize(bool inStabilizePitch, bool inStabilizeRoll, bool inSta
 void Controls::GetSensorsInput(void)
 {
   Orientation IMUOrientation;
-  double updatedDepthChange;
+  
   // Get newest IMU data on pitch roll and yaw
   _attitude.getUpdatedOrientation(IMUOrientation);
+  
   // Update internal values for our Spatial State
-
-  _sensorsInput.pitch  = IMUOrientation.pitch;
-  _sensorsInput.roll   = IMUOrientation.roll;
-  _sensorsInput.yaw    = IMUOrientation.yaw;
-
-  // Get newest pressure sensor data and calculate depth change
-  updatedDepthChange = getUpdatedDepthChange();
-  //update depth change state of controller 
-  _sensorsInput.depth  = updatedDepthChange;
+  _sensorsInput.pitch = IMUOrientation.pitch;
+  _sensorsInput.roll  = IMUOrientation.roll;
+  _sensorsInput.yaw   = IMUOrientation.yaw;
+  _sensorsInput.depth = GetDepth();
 
   // Note that we have no sensors for thrust
 }
@@ -155,6 +151,14 @@ void Controls::CalculatePIDs(bool inStabilizePitch, bool inStabilizeRoll, bool i
 void Controls::SetDesiredSpatialState(SpatialState &inSpatialState)
 {
   _setPoint = inSpatialState;
+
+  Serial.print("Set Yaw: ");
+  Serial.print(_setPoint.yaw);
+  Serial.print("\tDepth: ");
+  Serial.print(_setPoint.depth);
+  Serial.print("\tThrust: ");
+  Serial.print(_setPoint.thrust);
+  Serial.print("\t");
 }
 
 void Controls::GetCurrentSpatialState(SpatialState &outSpatialState)
@@ -192,15 +196,14 @@ void Controls::SetNewMotorValues(void)
   motorBRVal -= _PIDOutput.yaw;
 
   // Add thrust to the back motors
-
+  // This is done directly, as thust doesn't use PID
   motorBRVal += _setPoint.thrust;
   motorBLVal += _setPoint.thrust;
 
-  // TODO depth properly, pass through PID and pressure sensor
-  // For now just add it to the motor values
-  motorFRVal += _setPoint.depth;
-  motorFLVal += _setPoint.depth;
-  //maybe add motorBC here for depth control?
+  // Add depth to depth motors
+  motorFRVal += _PIDOutput.depth/2;
+  motorFLVal += _PIDOutput.depth/2;
+  motorBCVal += _PIDOutput.depth;
 
   // Contrain to motor limits
   motorBRVal = MOTOR_CONSTRAIN(motorBRVal);
@@ -257,17 +260,26 @@ void Controls::Start(void)
   // Set current yaw as 0
   _attitude.ZeroYaw();
 
+  // Set PID control to automatic, turns them on
+  _pitchPID.SetMode(AUTOMATIC);
+  _rollPID.SetMode(AUTOMATIC);
+  _yawPID.SetMode(AUTOMATIC);
+  _depthPID.SetMode(AUTOMATIC);
+
 }
 
-void Controls::calibratePressureSensor()
+void Controls::CalibratePressureSensor(void)
 {
   _basePressure = _pSensor.getPressure(ADC_4096);
   //might consider adding value for max nextDepth
 }
 
-double Controls::getUpdatedDepthChange()
+double Controls::GetDepth(void)
 {
-  return map(PressureToDepth(_pSensor.getPressure(ADC_4096)), MIN_DEPTH, MAX_DEPTH, -90, 90);
+  double absPressure = _pSensor.getPressure(ADC_4096);
+  double depth = abs(_basePressure - absPressure) * PRESSURE_TO_DEPTH_M;
+  
+  return depth;
 }
 
 void Controls::Stop(void)

@@ -35,7 +35,11 @@ void setup()
   manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
   controls.CalibrateMagnetometer();
 
-  Serial.println("Waiting for both button presses when ROV is in water..");
+  Serial.println("Waiting for button presses when ROV is in water, to calibrate pressure...");
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
+  controls.CalibratePressureSensor();
+
+  Serial.println("Waiting for both button presses to start ROV controls.");
   manInput.LoopUntilButtonPressAndRelease(ButtonWait_Both);
   controls.Start();
 }
@@ -52,17 +56,11 @@ void loop()
   // Get manual inputs
   manInput.GetJoystickInput(yawChange, thrust, depthChange);
 
-//  Serial.print(yawChange);
-//  Serial.print("\t");
-//  Serial.print(thrust);
-//  Serial.print("\t");
-//  Serial.println(depthChange);
-
   // Update controls setpoint
   controls.GetCurrentSetpoint(sp);
   sp.yaw   += yawChange;
   sp.thrust = thrust;
-  sp.depth  = depthChange*200 + 25; // TODO this should be +=, but since we dont have pressure sensor, we are just sending this value to the motors
+  sp.depth += depthChange;
   controls.SetDesiredSpatialState(sp);
 
   // Check e-stop
