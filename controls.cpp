@@ -7,6 +7,10 @@
 #define MOTOR_NEUTRAL          ((MOTOR_MAX + MOTOR_MIN)/2)
 #define MOTOR_CONSTRAIN(X)     (min(max((X), MOTOR_MIN), MOTOR_MAX))
 
+//TODO tune these later
+#define MIN_DEPTH 0
+#define MAX_DEPTH 2000
+
 #define PID_SAMPLE_TIME_MS (20)
 #define PID_OUTPUT_MAX     (MOTOR_MAX - MOTOR_NEUTRAL)
 #define PID_OUTPUT_MIN     (MOTOR_MIN - MOTOR_NEUTRAL)
@@ -22,6 +26,10 @@
 #define PID_YAW_KP   1
 #define PID_YAW_KI   0
 #define PID_YAW_KD   0
+
+#define PID_DEPTH_KP   1
+#define PID_DEPTH_KI   0
+#define PID_DEPTH_KD   0
 
 #define MOTOR_BR_REVERSED 0 // Needs checking TODO
 #define MOTOR_BL_REVERSED 0 // Needs checking
@@ -39,13 +47,14 @@ static int PORTFL = 10;
 Controls::Controls(void) :   _pitchPID(&_sensorsInput.pitch, &_PIDOutput.pitch, &_setPoint.pitch, PID_PITCH_KP, PID_PITCH_KI, PID_PITCH_KD, DIRECT),
   _rollPID(&_sensorsInput.roll, &_PIDOutput.roll, &_setPoint.roll, PID_ROLL_KP, PID_ROLL_KI, PID_ROLL_KD, DIRECT),
   _yawPID(&_sensorsInput.yaw, &_PIDOutput.yaw, &_setPoint.yaw, PID_YAW_KP, PID_YAW_KI, PID_YAW_KD, DIRECT),
+  _depthPID(&_sensorsInput.depth, &_PIDOutput.depth, &_setPoint.depth, PID_DEPTH_KP, PID_DEPTH_KI, PID_DEPTH_KD, DIRECT), _pSensor(ADDRESS_HIGH),
   _attitude()
 {
   // Init _setPoint (xr), input (x) and output (u) to 0
   _setPoint.pitch = _sensorsInput.pitch = _PIDOutput.pitch  = 0;
   _setPoint.roll  = _sensorsInput.roll  = _PIDOutput.roll   = 0;
   _setPoint.yaw   = _sensorsInput.yaw   = _PIDOutput.yaw    = 0;
-    
+
   // Set sample time of PID
   _pitchPID.SetSampleTime(PID_SAMPLE_TIME_MS);
   _rollPID.SetSampleTime(PID_SAMPLE_TIME_MS);
@@ -76,7 +85,7 @@ void Controls::CalibrateMagnetometer(void)
 void Controls::Stabilize(bool inStabilizePitch, bool inStabilizeRoll, bool inStabilizeYaw, bool inStabilizeDepth)
 {
   GetSensorsInput();
-  
+
   CalculatePIDs(inStabilizePitch, inStabilizeRoll, inStabilizeYaw, inStabilizeDepth);
 
   SetNewMotorValues();
@@ -85,16 +94,20 @@ void Controls::Stabilize(bool inStabilizePitch, bool inStabilizeRoll, bool inSta
 void Controls::GetSensorsInput(void)
 {
   Orientation IMUOrientation;
-  
+  double updatedDepthChange;
   // Get newest IMU data on pitch roll and yaw
   _attitude.getUpdatedOrientation(IMUOrientation);
-
   // Update internal values for our Spatial State
+
   _sensorsInput.pitch  = IMUOrientation.pitch;
   _sensorsInput.roll   = IMUOrientation.roll;
   _sensorsInput.yaw    = IMUOrientation.yaw;
-  //TODO get depth from pressure sensor
-  
+
+  // Get newest pressure sensor data and calculate depth change
+  updatedDepthChange = getUpdatedDepthChange();
+  //update depth change state of controller 
+  _sensorsInput.depth  = updatedDepthChange;
+
   // Note that we have no sensors for thrust
 }
 
@@ -104,21 +117,21 @@ void Controls::CalculatePIDs(bool inStabilizePitch, bool inStabilizeRoll, bool i
   if (inStabilizePitch)
   {
     _pitchPID.Compute();
-  }  
-  else 
+  }
+  else
   {
     _PIDOutput.pitch = 0;
   }
-  
+
   if (inStabilizeRoll)
   {
     _rollPID.Compute();
   }
-
   else
   {
     _PIDOutput.roll = 0;
   }
+
   if (inStabilizeYaw)
   {
     _yawPID.Compute();
@@ -128,7 +141,15 @@ void Controls::CalculatePIDs(bool inStabilizePitch, bool inStabilizeRoll, bool i
     _PIDOutput.yaw = 0;
   }
 
-  // TODO depth
+  if(inStabilizeDepth)
+  {
+    _depthPID.Compute();
+  }
+  else
+  {
+    _PIDOutput.depth = 0;
+  }
+
 }
 
 void Controls::SetDesiredSpatialState(SpatialState &inSpatialState)
@@ -162,7 +183,7 @@ void Controls::SetNewMotorValues(void)
   motorFLVal -= _PIDOutput.pitch/2;
   motorFRVal -= _PIDOutput.pitch/2;
 
-  // Roll correction  
+  // Roll correction
   motorFLVal += _PIDOutput.roll;
   motorFRVal -= _PIDOutput.roll;
 
@@ -171,7 +192,7 @@ void Controls::SetNewMotorValues(void)
   motorBRVal -= _PIDOutput.yaw;
 
   // Add thrust to the back motors
-  
+
   motorBRVal += _setPoint.thrust;
   motorBLVal += _setPoint.thrust;
 
@@ -179,6 +200,7 @@ void Controls::SetNewMotorValues(void)
   // For now just add it to the motor values
   motorFRVal += _setPoint.depth;
   motorFLVal += _setPoint.depth;
+  //maybe add motorBC here for depth control?
 
   // Contrain to motor limits
   motorBRVal = MOTOR_CONSTRAIN(motorBRVal);
@@ -193,7 +215,7 @@ void Controls::SetNewMotorValues(void)
   motorBCVal = (MOTOR_BC_REVERSED) ? (MOTOR_NEUTRAL*2 - motorBCVal) : motorBCVal;
   motorFRVal = (MOTOR_FR_REVERSED) ? (MOTOR_NEUTRAL*2 - motorFRVal) : motorFRVal;
   motorFLVal = (MOTOR_FL_REVERSED) ? (MOTOR_NEUTRAL*2 - motorFLVal) : motorFLVal;
-  
+
   // Write to motors
   _motorBC.write(motorBCVal);
   _motorBL.write(motorBLVal);
@@ -201,7 +223,7 @@ void Controls::SetNewMotorValues(void)
   _motorFL.write(motorFLVal);
   _motorFR.write(motorFRVal);
 
-#if PRINT_MOTOR_VALUES 
+#if PRINT_MOTOR_VALUES
   Serial.print("BC: ");
   Serial.print(motorBCVal);
   Serial.print("\tBL: ");
@@ -234,7 +256,18 @@ void Controls::Start(void)
 
   // Set current yaw as 0
   _attitude.ZeroYaw();
-  
+
+}
+
+void Controls::calibratePressureSensor()
+{
+  _basePressure = _pSensor.getPressure(ADC_4096);
+  //might consider adding value for max nextDepth
+}
+
+double Controls::getUpdatedDepthChange()
+{
+  return map(PressureToDepth(_pSensor.getPressure(ADC_4096)), MIN_DEPTH, MAX_DEPTH, -90, 90);
 }
 
 void Controls::Stop(void)
@@ -245,4 +278,3 @@ void Controls::Stop(void)
   _motorFL.write(MOTOR_NEUTRAL);
   _motorFR.write(MOTOR_NEUTRAL);
 }
-
