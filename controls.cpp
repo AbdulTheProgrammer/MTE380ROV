@@ -31,8 +31,8 @@
 #define PID_DEPTH_KI   0
 #define PID_DEPTH_KD   0
 
-#define MOTOR_BR_REVERSED 0 // Needs checking TODO
-#define MOTOR_BL_REVERSED 0 // Needs checking
+#define MOTOR_BR_REVERSED 1
+#define MOTOR_BL_REVERSED 0
 #define MOTOR_BC_REVERSED 1
 #define MOTOR_FR_REVERSED 0
 #define MOTOR_FL_REVERSED 0
