@@ -26,6 +26,7 @@
 #define PID_YAW_KP   1
 #define PID_YAW_KI   0
 #define PID_YAW_KD   0
+static float yawKP = PID_YAW_KP;
 
 #define PID_DEPTH_KP   1
 #define PID_DEPTH_KI   0
@@ -37,19 +38,20 @@
 #define MOTOR_FR_REVERSED 0
 #define MOTOR_FL_REVERSED 0
 
-#define PRESSURE_TO_DEPTH_M 0.1019  //0.1222
+#define PRESSURE_TO_DEPTH_M 10.1936  //0.1019  //0.1222
 
 #define PORTBR 13
 #define PORTBL 12
 #define PORTBC 11
-#define PORTFR 9
 #define PORTFL 10
+#define PORTFR 9
+
 
 Controls::Controls(void) :   
   _pitchPID((double*)&_sensorsInput.pitch, (double*)&_PIDOutput.pitch, (double*)&_setPoint.pitch, PID_PITCH_KP, PID_PITCH_KI, PID_PITCH_KD, DIRECT),
   _rollPID ((double*)&_sensorsInput.roll,  (double*)&_PIDOutput.roll,  (double*)&_setPoint.roll,  PID_ROLL_KP,  PID_ROLL_KI,  PID_ROLL_KD,  DIRECT),
   _yawPID  ((double*)&_sensorsInput.yaw,   (double*)&_PIDOutput.yaw,   (double*)&_setPoint.yaw,   PID_YAW_KP,   PID_YAW_KI,   PID_YAW_KD,   DIRECT),
-  _depthPID((double*)&_sensorsInput.depth, (double*)&_PIDOutput.depth, (double*)&_setPoint.depth, PID_DEPTH_KP, PID_DEPTH_KI, PID_DEPTH_KD, REVERSE), 
+  _depthPID((double*)&_sensorsInput.depth, (double*)&_PIDOutput.depth, (double*)&_setPoint.depth, PID_DEPTH_KP, PID_DEPTH_KI, PID_DEPTH_KD, DIRECT), 
   _pSensor(ADDRESS_HIGH),
   _attitude()
 {
@@ -153,7 +155,7 @@ void Controls::SetDesiredSpatialState(SpatialState &inSpatialState)
   _setPoint = inSpatialState;
 
   // Make sure dpeth is positive
-  _setPoint.depth = max(0, _setPoint.depth);
+  //_setPoint.depth = max(0, _setPoint.depth);
 
   Serial.print("Set Yaw: ");
   Serial.print(_setPoint.yaw);
@@ -204,9 +206,9 @@ void Controls::SetNewMotorValues(void)
   motorBLVal += _setPoint.thrust;
 
   // Add depth to depth motors
-  motorFRVal += _PIDOutput.depth/2;
-  motorFLVal += _PIDOutput.depth/2;
-  motorBCVal += _PIDOutput.depth;
+  motorFRVal -= _PIDOutput.depth/2;
+  motorFLVal -= _PIDOutput.depth/2;
+  motorBCVal -= _PIDOutput.depth;
 
   // Contrain to motor limits
   motorBRVal = MOTOR_CONSTRAIN(motorBRVal);
@@ -273,6 +275,9 @@ void Controls::Start(void)
 
 void Controls::CalibratePressureSensor(void)
 {
+  _pSensor.reset();
+  _pSensor.begin();
+  
   _basePressure = _pSensor.getPressure(ADC_4096);
   //might consider adding value for max nextDepth
 }
@@ -281,7 +286,13 @@ double Controls::GetDepth(void)
 {
   double absPressure = _pSensor.getPressure(ADC_4096);
   double depth = abs(_basePressure - absPressure) * PRESSURE_TO_DEPTH_M;
-  
+
+  Serial.print("Abs Depth: ");
+  Serial.print(absPressure);
+  Serial.print("\tRel Depth: ");
+  Serial.print(depth);
+  Serial.print("\t");
+//  
   return depth;
 }
 
@@ -319,7 +330,7 @@ void Controls::CalibrateMotors(void)
 
   delay(7000);
 
-   _motorBR.write(90);
+  _motorBR.write(90);
   _motorBL.write(90);
   _motorBC.write(90);
   _motorFR.write(90);
@@ -327,5 +338,18 @@ void Controls::CalibrateMotors(void)
 
   while(1);
 
+}
+
+void Controls::IncreaseTuning(void)
+{
+  yawKP += 0.5;
+  _yawPID.SetTunings(yawKP, PID_YAW_KI, PID_YAW_KD);
+}
+
+void Controls::DecreaseTuning(void)
+{
+  yawKP -= 0.5;
+  yawKP = max(yawKP, 0);
+  _yawPID.SetTunings(yawKP, PID_YAW_KI, PID_YAW_KD);
 }
 

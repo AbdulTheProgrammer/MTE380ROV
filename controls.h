@@ -127,4 +127,8 @@ class Controls
    * \brief   Stops all controls. Should only be called in emergency stops or when shutting down.
    */
   void Stop();
+
+  void IncreaseTuning(void);
+
+  void DecreaseTuning(void);
 };

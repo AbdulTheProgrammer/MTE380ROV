@@ -72,6 +72,16 @@ void loop()
     controls.Stop();
     while(1);
   }
+  else if (leftButtonPressed)
+  {
+    controls.DecreaseTuning();
+    delay(500);
+  }
+  else if (rightButtonPressed)
+  {
+    controls.IncreaseTuning();
+    delay(500);
+  }
   
   delay(LOOP_DELAY_MS);
 }
