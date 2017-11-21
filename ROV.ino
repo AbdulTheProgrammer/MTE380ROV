@@ -27,6 +27,8 @@ void setup()
   Wire.begin();
   Serial.begin(38400);
 
+  //controls.CalibrateMotors();
+
   Serial.println("Initialized. Waiting for button press to calibrate MPU..");
   manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
   controls.CalibrateAccelGyro();

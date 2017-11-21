@@ -1,7 +1,7 @@
 #include "controls.h"
 
 #define MOTOR_STARTUP_DELAY_MS (2000)
-#define MOTOR_LIMIT_MARGIN     (20)
+#define MOTOR_LIMIT_MARGIN     (30)
 #define MOTOR_MIN              (0 + MOTOR_LIMIT_MARGIN)
 #define MOTOR_MAX              (180 - MOTOR_LIMIT_MARGIN)
 #define MOTOR_NEUTRAL          ((MOTOR_MAX + MOTOR_MIN)/2)
@@ -39,17 +39,17 @@
 
 #define PRESSURE_TO_DEPTH_M 0.1019  //0.1222
 
-static int PORTBR = 13;
-static int PORTBL = 12;
-static int PORTBC = 11;
-static int PORTFR = 9;
-static int PORTFL = 10;
+#define PORTBR 13
+#define PORTBL 12
+#define PORTBC 11
+#define PORTFR 9
+#define PORTFL 10
 
 Controls::Controls(void) :   
-  _pitchPID(&_sensorsInput.pitch, &_PIDOutput.pitch, &_setPoint.pitch, PID_PITCH_KP, PID_PITCH_KI, PID_PITCH_KD, DIRECT),
-  _rollPID (&_sensorsInput.roll,  &_PIDOutput.roll,  &_setPoint.roll,  PID_ROLL_KP,  PID_ROLL_KI,  PID_ROLL_KD,  DIRECT),
-  _yawPID  (&_sensorsInput.yaw,   &_PIDOutput.yaw,   &_setPoint.yaw,   PID_YAW_KP,   PID_YAW_KI,   PID_YAW_KD,   DIRECT),
-  _depthPID(&_sensorsInput.depth, &_PIDOutput.depth, &_setPoint.depth, PID_DEPTH_KP, PID_DEPTH_KI, PID_DEPTH_KD, REVERSE), 
+  _pitchPID((double*)&_sensorsInput.pitch, (double*)&_PIDOutput.pitch, (double*)&_setPoint.pitch, PID_PITCH_KP, PID_PITCH_KI, PID_PITCH_KD, DIRECT),
+  _rollPID ((double*)&_sensorsInput.roll,  (double*)&_PIDOutput.roll,  (double*)&_setPoint.roll,  PID_ROLL_KP,  PID_ROLL_KI,  PID_ROLL_KD,  DIRECT),
+  _yawPID  ((double*)&_sensorsInput.yaw,   (double*)&_PIDOutput.yaw,   (double*)&_setPoint.yaw,   PID_YAW_KP,   PID_YAW_KI,   PID_YAW_KD,   DIRECT),
+  _depthPID((double*)&_sensorsInput.depth, (double*)&_PIDOutput.depth, (double*)&_setPoint.depth, PID_DEPTH_KP, PID_DEPTH_KI, PID_DEPTH_KD, REVERSE), 
   _pSensor(ADDRESS_HIGH),
   _attitude()
 {
@@ -151,6 +151,9 @@ void Controls::CalculatePIDs(bool inStabilizePitch, bool inStabilizeRoll, bool i
 void Controls::SetDesiredSpatialState(SpatialState &inSpatialState)
 {
   _setPoint = inSpatialState;
+
+  // Make sure dpeth is positive
+  _setPoint.depth = max(0, _setPoint.depth);
 
   Serial.print("Set Yaw: ");
   Serial.print(_setPoint.yaw);
@@ -290,3 +293,39 @@ void Controls::Stop(void)
   _motorFL.write(MOTOR_NEUTRAL);
   _motorFR.write(MOTOR_NEUTRAL);
 }
+
+void Controls::CalibrateMotors(void)
+{
+      // Attach motor instances to their pins
+  _motorBR.attach(PORTBR);
+  _motorBL.attach(PORTBL);
+  _motorBC.attach(PORTBC);
+  _motorFR.attach(PORTFR);
+  _motorFL.attach(PORTFL);
+
+  _motorBR.write(170);
+  _motorBL.write(170);
+  _motorBC.write(170);
+  _motorFR.write(170);
+  _motorFL.write(170);
+
+  delay(7000);
+
+  _motorBR.write(10);
+  _motorBL.write(10);
+  _motorBC.write(10);
+  _motorFR.write(10);
+  _motorFL.write(10);
+
+  delay(7000);
+
+   _motorBR.write(90);
+  _motorBL.write(90);
+  _motorBC.write(90);
+  _motorFR.write(90);
+  _motorFL.write(90);
+
+  while(1);
+
+}
+

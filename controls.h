@@ -11,11 +11,11 @@
 
 typedef struct SpatialState
 {
-  double pitch;
-  double roll;
-  double yaw;
-  double thrust;
-  double depth;
+  float pitch;
+  float roll;
+  float yaw;
+  float thrust;
+  float depth;
 } SpatialState;
 
 class Controls
@@ -36,8 +36,8 @@ class Controls
 
   //pressure instances
   MS5803 _pSensor;
-  double _basePressure;
-  double _currentPressure;
+  float _basePressure;
+  float _currentPressure;
 
   // Motor instances
   Servo _motorBL;
@@ -53,6 +53,11 @@ class Controls
   
  public:
   Controls(void);
+
+  /*!
+   * \brief   Calibrates the motors. Should never really be called except for during debugging. Hangs the program after.
+   */
+  void CalibrateMotors(void);
 
   /*!
    * \brief   Starts and calibrates the accelerometer and gyro.
