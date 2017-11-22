@@ -11,7 +11,7 @@
 #define PID_OUTPUT_MAX     (MOTOR_MAX - MOTOR_NEUTRAL)
 #define PID_OUTPUT_MIN     (MOTOR_MIN - MOTOR_NEUTRAL)
 
-#define PID_PITCH_KP 4
+#define PID_PITCH_KP 6 //4
 #define PID_PITCH_KI 0
 #define PID_PITCH_KD 0 //0.015 // makes it more stable, but it starts spinning bc the BC motor is tilted. Needs yaw correction.
 
@@ -19,7 +19,7 @@
 #define PID_ROLL_KI  0
 #define PID_ROLL_KD  0 //0.015 // makes it more stable, but it starts spinning bc the BC motor is tilted. Needs yaw correction.
 
-#define PID_YAW_KP   8
+#define PID_YAW_KP   6
 #define PID_YAW_KI   0
 #define PID_YAW_KD   2
 static float pitchKD = PID_PITCH_KD;
@@ -34,7 +34,7 @@ static float pitchKD = PID_PITCH_KD;
 #define MOTOR_FR_REVERSED 0
 #define MOTOR_FL_REVERSED 0
 
-#define PRESSURE_TO_DEPTH_M 10.1936  //0.1019  //0.1222
+#define PRESSURE_TO_DEPTH_MM 10.1936  //0.1019  //0.1222
 
 #define PORTBR 13
 #define PORTBL 12
@@ -146,6 +146,10 @@ void Controls::CalculatePIDs(bool inStabilizePitch, bool inStabilizeRoll, bool i
 
   Serial.print("Pitch corr: ");
   Serial.print(_PIDOutput.pitch);
+  Serial.print("\tRoll corr:");
+  Serial.print(_PIDOutput.roll);
+  Serial.print("\tDepth corr:");
+  Serial.print(_PIDOutput.depth);
   Serial.print("\t");
 
 }
@@ -285,7 +289,7 @@ void Controls::CalibratePressureSensor(void)
 double Controls::GetDepth(void)
 {
   double absPressure = _pSensor.getPressure(ADC_4096);
-  double depth = abs(_basePressure - absPressure) * PRESSURE_TO_DEPTH_M;
+  double depth = abs(_basePressure - absPressure) * PRESSURE_TO_DEPTH_MM;
 
   Serial.print("Abs Depth: ");
   Serial.print(absPressure);
