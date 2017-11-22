@@ -28,7 +28,7 @@ static float pitchKD = PID_PITCH_KD;
 #define PID_DEPTH_KI   0
 #define PID_DEPTH_KD   0
 
-#define MOTOR_BR_REVERSED 1
+#define MOTOR_BR_REVERSED 0
 #define MOTOR_BL_REVERSED 0
 #define MOTOR_BC_REVERSED 0
 #define MOTOR_FR_REVERSED 0
@@ -190,16 +190,16 @@ void Controls::SetNewMotorValues(void)
   motorFRVal = MOTOR_NEUTRAL;
   motorFLVal = MOTOR_NEUTRAL;
 
-  // Pitch correction
+  // Pitch correction (positive correction value when nose pointing up)
   motorBCVal += _PIDOutput.pitch;
   motorFLVal -= _PIDOutput.pitch/2;
   motorFRVal -= _PIDOutput.pitch/2;
 
-  // Roll correction
+  // Roll correction (positive correction value when banking left)
   motorFLVal += _PIDOutput.roll;
   motorFRVal -= _PIDOutput.roll;
 
-  // Yaw correction
+  // Yaw correction (positive correction value when turning left (drifting left))
   motorBLVal += _PIDOutput.yaw;
   motorBRVal -= _PIDOutput.yaw;
 
@@ -208,7 +208,7 @@ void Controls::SetNewMotorValues(void)
   motorBRVal += _setPoint.thrust;
   motorBLVal += _setPoint.thrust;
 
-  // Add depth to depth motors
+  // Add depth to depth motors (positive correction value when we're too high from 
   motorFRVal -= _PIDOutput.depth/2;
   motorFLVal -= _PIDOutput.depth/2;
   motorBCVal -= _PIDOutput.depth;
