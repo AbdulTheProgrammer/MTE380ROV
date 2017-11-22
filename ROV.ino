@@ -33,9 +33,9 @@ void setup()
   manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
   controls.CalibrateAccelGyro();
 
-  Serial.println("Waiting for button press to calibrate AK8963...");
-  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
-  controls.CalibrateMagnetometer();
+  //Serial.println("Waiting for button press to calibrate AK8963...");
+  //manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
+  //controls.CalibrateMagnetometer();
 
   Serial.println("Waiting for button presses when ROV is in water, to calibrate pressure...");
   manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
@@ -53,7 +53,7 @@ void loop()
   SpatialState sp;
 
   // Stabilize the ROV through the control loop stack
-  controls.Stabilize(true, true, true, true);
+  controls.Stabilize(true, true, false, true);
 
   // Get manual inputs
   manInput.GetJoystickInput(yawChange, thrust, depthChange);

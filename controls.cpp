@@ -7,15 +7,11 @@
 #define MOTOR_NEUTRAL          ((MOTOR_MAX + MOTOR_MIN)/2)
 #define MOTOR_CONSTRAIN(X)     (min(max((X), MOTOR_MIN), MOTOR_MAX))
 
-//TODO tune these later
-#define MIN_DEPTH 0
-#define MAX_DEPTH 2000
-
 #define PID_SAMPLE_TIME_MS (20)
 #define PID_OUTPUT_MAX     (MOTOR_MAX - MOTOR_NEUTRAL)
 #define PID_OUTPUT_MIN     (MOTOR_MIN - MOTOR_NEUTRAL)
 
-#define PID_PITCH_KP 1
+#define PID_PITCH_KP 4
 #define PID_PITCH_KI 0
 #define PID_PITCH_KD 0 //0.015 // makes it more stable, but it starts spinning bc the BC motor is tilted. Needs yaw correction.
 
@@ -23,10 +19,10 @@
 #define PID_ROLL_KI  0
 #define PID_ROLL_KD  0 //0.015 // makes it more stable, but it starts spinning bc the BC motor is tilted. Needs yaw correction.
 
-#define PID_YAW_KP   1
+#define PID_YAW_KP   8
 #define PID_YAW_KI   0
-#define PID_YAW_KD   0
-static float yawKP = PID_YAW_KP;
+#define PID_YAW_KD   2
+static float pitchKD = PID_PITCH_KD;
 
 #define PID_DEPTH_KP   1
 #define PID_DEPTH_KI   0
@@ -34,7 +30,7 @@ static float yawKP = PID_YAW_KP;
 
 #define MOTOR_BR_REVERSED 1
 #define MOTOR_BL_REVERSED 0
-#define MOTOR_BC_REVERSED 1
+#define MOTOR_BC_REVERSED 0
 #define MOTOR_FR_REVERSED 0
 #define MOTOR_FL_REVERSED 0
 
@@ -148,6 +144,10 @@ void Controls::CalculatePIDs(bool inStabilizePitch, bool inStabilizeRoll, bool i
     _PIDOutput.depth = 0;
   }
 
+  Serial.print("Pitch corr: ");
+  Serial.print(_PIDOutput.pitch);
+  Serial.print("\t");
+
 }
 
 void Controls::SetDesiredSpatialState(SpatialState &inSpatialState)
@@ -157,13 +157,13 @@ void Controls::SetDesiredSpatialState(SpatialState &inSpatialState)
   // Make sure dpeth is positive
   //_setPoint.depth = max(0, _setPoint.depth);
 
-  Serial.print("Set Yaw: ");
-  Serial.print(_setPoint.yaw);
-  Serial.print("\tDepth: ");
-  Serial.print(_setPoint.depth);
-  Serial.print("\tThrust: ");
-  Serial.print(_setPoint.thrust);
-  Serial.print("\t");
+//  Serial.print("Set Yaw: ");
+//  Serial.print(_setPoint.yaw);
+//  Serial.print("\tDepth: ");
+//  Serial.print(_setPoint.depth);
+//  Serial.print("\tThrust: ");
+//  Serial.print(_setPoint.thrust);
+//  Serial.print("\t");
 }
 
 void Controls::GetCurrentSpatialState(SpatialState &outSpatialState)
@@ -342,14 +342,14 @@ void Controls::CalibrateMotors(void)
 
 void Controls::IncreaseTuning(void)
 {
-  yawKP += 0.5;
-  _yawPID.SetTunings(yawKP, PID_YAW_KI, PID_YAW_KD);
+  pitchKD += 0.005;
+  _pitchPID.SetTunings(PID_PITCH_KP, PID_PITCH_KI, pitchKD);
 }
 
 void Controls::DecreaseTuning(void)
 {
-  yawKP -= 0.5;
-  yawKP = max(yawKP, 0);
-  _yawPID.SetTunings(yawKP, PID_YAW_KI, PID_YAW_KD);
+  pitchKD -= 0.005;
+  pitchKD = max(pitchKD, 0);
+  _pitchPID.SetTunings(PID_PITCH_KP, PID_PITCH_KI, pitchKD);
 }
 
