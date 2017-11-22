@@ -39,9 +39,9 @@ public:
   void GetJoystickInput(double &setPointYawChange, double &setPointThrust, double &setPointDepthChange);
 
   /*
-   * \brief  Reads button presses from the joysticks.
+   * \brief  Reads button press state from the joysticks.
    */
-  void GetButtonPresses(bool &left, bool &right);
+  void GetButtonState(bool &left, bool &right);
 
   /*
    * \brief   Waits for the specified buttons to be pressed and released.

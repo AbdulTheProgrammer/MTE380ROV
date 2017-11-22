@@ -149,8 +149,7 @@ void Controls::CalculatePIDs(bool inStabilizePitch, bool inStabilizeRoll, bool i
   Serial.print("\tRoll corr:");
   Serial.print(_PIDOutput.roll);
   Serial.print("\tDepth corr:");
-  Serial.print(_PIDOutput.depth);
-  Serial.print("\t");
+  Serial.println(_PIDOutput.depth);
 
 }
 
@@ -291,9 +290,7 @@ double Controls::GetDepth(void)
   double absPressure = _pSensor.getPressure(ADC_4096);
   double depth = abs(_basePressure - absPressure) * PRESSURE_TO_DEPTH_MM;
 
-  Serial.print("Abs Depth: ");
-  Serial.print(absPressure);
-  Serial.print("\tRel Depth: ");
+  Serial.print("Rel Depth: ");
   Serial.print(depth);
   Serial.print("\t");
 //  

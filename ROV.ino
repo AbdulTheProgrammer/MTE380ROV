@@ -18,7 +18,7 @@ Supported Platforms:
 static Controls controls;
 static ManualInput manInput;
 
-#define LOOP_DELAY_MS 50
+#define LOOP_DELAY_MS 1
 
 void setup()
 {
@@ -66,7 +66,7 @@ void loop()
   controls.SetDesiredSpatialState(sp);
 
   // Check e-stop
-  manInput.GetButtonPresses(leftButtonPressed, rightButtonPressed);
+  manInput.GetButtonState(leftButtonPressed, rightButtonPressed);
   if (leftButtonPressed && rightButtonPressed)
   {
     controls.Stop();

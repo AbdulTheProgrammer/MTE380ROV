@@ -51,11 +51,10 @@ void ManualInput::GetJoystickInput(double &setPointYawChange, double &setPointTh
   _lastUpdate = Now;
 }
 
-void ManualInput::GetButtonPresses(bool &left, bool &right)
+void ManualInput::GetButtonState(bool &left, bool &right)
 {
   left = _Joystick.readLD();
   right = _Joystick.readRD();
-  delay(DEBOUNCE_TIME_MS);
 }
 
 void ManualInput::LoopUntilButtonPressAndRelease(ButtonWaitMode mode)

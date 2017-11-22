@@ -1,6 +1,6 @@
 #include "attitude.h"
 
-#define KALMAN_Q_ANGLE 0.1f
+#define KALMAN_Q_ANGLE 0.1f // Try changing to around 0.01f
 
 Attitude::Attitude(void) : imu(NOT_SPI)
 {
@@ -18,10 +18,10 @@ bool Attitude::calibrateMPU9250(void)
 {
     // First test the I2C connection
     byte c = imu.readByte(MPU9250_ADDRESS, WHO_AM_I_MPU9250);
-    Serial.print(F("MPU9250 I AM 0x"));
-    Serial.print(c, HEX);
-    Serial.print(F(" I should be 0x"));
-    Serial.println(0x71, HEX);
+//    Serial.print(F("MPU9250 I AM 0x"));
+//    Serial.print(c, HEX);
+//    Serial.print(F(" I should be 0x"));
+//    Serial.println(0x71, HEX);
   
     if (c != 0x71) // WHO_AM_I should always be 0x71
     {
@@ -32,18 +32,18 @@ bool Attitude::calibrateMPU9250(void)
   
    // Start by performing self test and reporting values
     imu.MPU9250SelfTest(imu.selfTest);
-    Serial.print(F("x-axis self test: acceleration trim within : "));
-    Serial.print(imu.selfTest[0],1); Serial.println("% of factory value");
-    Serial.print(F("y-axis self test: acceleration trim within : "));
-    Serial.print(imu.selfTest[1],1); Serial.println("% of factory value");
-    Serial.print(F("z-axis self test: acceleration trim within : "));
-    Serial.print(imu.selfTest[2],1); Serial.println("% of factory value");
-    Serial.print(F("x-axis self test: gyration trim within : "));
-    Serial.print(imu.selfTest[3],1); Serial.println("% of factory value");
-    Serial.print(F("y-axis self test: gyration trim within : "));
-    Serial.print(imu.selfTest[4],1); Serial.println("% of factory value");
-    Serial.print(F("z-axis self test: gyration trim within : "));
-    Serial.print(imu.selfTest[5],1); Serial.println("% of factory value");
+//    Serial.print(F("x-axis self test: acceleration trim within : "));
+//    Serial.print(imu.selfTest[0],1); Serial.println("% of factory value");
+//    Serial.print(F("y-axis self test: acceleration trim within : "));
+//    Serial.print(imu.selfTest[1],1); Serial.println("% of factory value");
+//    Serial.print(F("z-axis self test: acceleration trim within : "));
+//    Serial.print(imu.selfTest[2],1); Serial.println("% of factory value");
+//    Serial.print(F("x-axis self test: gyration trim within : "));
+//    Serial.print(imu.selfTest[3],1); Serial.println("% of factory value");
+//    Serial.print(F("y-axis self test: gyration trim within : "));
+//    Serial.print(imu.selfTest[4],1); Serial.println("% of factory value");
+//    Serial.print(F("z-axis self test: gyration trim within : "));
+//    Serial.print(imu.selfTest[5],1); Serial.println("% of factory value");
 
     // Calibrate gyro and accelerometers, load biases in bias registers
     imu.calibrateMPU9250(imu.gyroBias, imu.accelBias);
@@ -51,7 +51,7 @@ bool Attitude::calibrateMPU9250(void)
     imu.initMPU9250();
     // Initialize device for active mode read of acclerometer, gyroscope, and
     // temperature
-    Serial.println("MPU9250 initialized for active data mode....");
+    Serial.println("MPU9250 init");
 
     // Check if the IMU is upside down
     imu.readAccelData(imu.accelCount);  // Read the x/y/z adc values
@@ -68,11 +68,11 @@ bool Attitude::calibrateAK8963(void)
 {
     // First test the I2C connection
     byte d = imu.readByte(AK8963_ADDRESS, WHO_AM_I_AK8963);
-    Serial.print("AK8963 ");
-    Serial.print("I AM 0x");
-    Serial.print(d, HEX);
-    Serial.print(" I should be 0x");
-    Serial.println(0x48, HEX);
+//    Serial.print("AK8963 ");
+//    Serial.print("I AM 0x");
+//    Serial.print(d, HEX);
+//    Serial.print(" I should be 0x");
+//    Serial.println(0x48, HEX);
   
     if (d != 0x48)
     {
@@ -85,15 +85,15 @@ bool Attitude::calibrateAK8963(void)
     // Get magnetometer calibration from AK8963 ROM
     imu.initAK8963(imu.factoryMagCalibration);
     // Initialize device for active mode read of magnetometer
-    Serial.println("AK8963 initialized for active data mode....");
+    //Serial.println("AK8963 initialized for active data mode....");
 
     //  Serial.println("Calibration values: ");
-    Serial.print("X-Axis factory sensitivity adjustment value ");
-    Serial.println(imu.factoryMagCalibration[0], 2);
-    Serial.print("Y-Axis factory sensitivity adjustment value ");
-    Serial.println(imu.factoryMagCalibration[1], 2);
-    Serial.print("Z-Axis factory sensitivity adjustment value ");
-    Serial.println(imu.factoryMagCalibration[2], 2);
+//    Serial.print("X-Axis factory sensitivity adjustment value ");
+//    Serial.println(imu.factoryMagCalibration[0], 2);
+//    Serial.print("Y-Axis factory sensitivity adjustment value ");
+//    Serial.println(imu.factoryMagCalibration[1], 2);
+//    Serial.print("Z-Axis factory sensitivity adjustment value ");
+//    Serial.println(imu.factoryMagCalibration[2], 2);
     
     // Get sensor resolutions, only need to do this once
     imu.getMres();
@@ -101,23 +101,24 @@ bool Attitude::calibrateAK8963(void)
     // The next call delays for 4 seconds, and then records about 15 seconds of
     // data to calculate bias and scale.
     imu.magCalMPU9250(imu.magBias, imu.magScale);
-    Serial.println("AK8963 mag biases (mG)");
-    Serial.println(imu.magBias[0]);
-    Serial.println(imu.magBias[1]);
-    Serial.println(imu.magBias[2]);
-
-    Serial.println("AK8963 mag scale (mG)");
-    Serial.println(imu.magScale[0]);
-    Serial.println(imu.magScale[1]);
-    Serial.println(imu.magScale[2]);
-
-    Serial.println("Magnetometer:");
-    Serial.print("X-Axis sensitivity adjustment value ");
-    Serial.println(imu.factoryMagCalibration[0], 2);
-    Serial.print("Y-Axis sensitivity adjustment value ");
-    Serial.println(imu.factoryMagCalibration[1], 2);
-    Serial.print("Z-Axis sensitivity adjustment value ");
-    Serial.println(imu.factoryMagCalibration[2], 2);
+//    Serial.println("AK8963 mag biases (mG)");
+//    Serial.println(imu.magBias[0]);
+//    Serial.println(imu.magBias[1]);
+//    Serial.println(imu.magBias[2]);
+//
+//    Serial.println("AK8963 mag scale (mG)");
+//    Serial.println(imu.magScale[0]);
+//    Serial.println(imu.magScale[1]);
+//    Serial.println(imu.magScale[2]);
+//
+//    Serial.println("Magnetometer:");
+//    Serial.print("X-Axis sensitivity adjustment value ");
+//    Serial.println(imu.factoryMagCalibration[0], 2);
+//    Serial.print("Y-Axis sensitivity adjustment value ");
+//    Serial.println(imu.factoryMagCalibration[1], 2);
+//    Serial.print("Z-Axis sensitivity adjustment value ");
+//    Serial.println(imu.factoryMagCalibration[2], 2);
+    Serial.println("AK8963 init.");
 
     return true;
 }
