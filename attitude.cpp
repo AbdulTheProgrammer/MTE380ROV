@@ -1,6 +1,6 @@
 #include "attitude.h"
 
-#define KALMAN_Q_ANGLE 0.1f // Try changing to around 0.01f
+#define KALMAN_Q_ANGLE 0.1f // Try changing to 0.01f or lower. Not below 0.002f.
 
 Attitude::Attitude(void) : imu(NOT_SPI)
 {
