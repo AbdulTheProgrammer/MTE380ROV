@@ -46,7 +46,7 @@ void setup()
   controls.CalibratePressureSensor();
 
   Serial.println("Waiting for both button presses to start ROV controls.");
-  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Both);
   controls.Start();
 }
 
@@ -76,21 +76,21 @@ void loop()
 
   // Check e-stop
   manInput.GetButtonState(leftButtonPressed, rightButtonPressed);
-  if (leftButtonPressed || rightButtonPressed)
+  if (leftButtonPressed && rightButtonPressed)
   {
     controls.Stop();
     while(1);
   }
-//  else if (leftButtonPressed)
-//  {
-//    controls.DecreaseTuning();
-//    delay(500);
-//  }
-//  else if (rightButtonPressed)
-//  {
-//    controls.IncreaseTuning();
-//    delay(500);
-//  }
+  else if (leftButtonPressed)
+  {
+    controls.DecreaseTuning();
+    delay(500);
+  }
+  else if (rightButtonPressed)
+  {
+    controls.IncreaseTuning();
+    delay(500);
+  }
   
   delay(LOOP_DELAY_MS);
 }
