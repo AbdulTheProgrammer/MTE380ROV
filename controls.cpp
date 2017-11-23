@@ -11,7 +11,7 @@
 #define PID_OUTPUT_MAX     (MOTOR_MAX - MOTOR_NEUTRAL)
 #define PID_OUTPUT_MIN     (MOTOR_MIN - MOTOR_NEUTRAL)
 
-#define PID_PITCH_KP 6 //4
+#define PID_PITCH_KP 4 //4
 #define PID_PITCH_KI 0
 #define PID_PITCH_KD 0 //0.015 // makes it more stable, but it starts spinning bc the BC motor is tilted. Needs yaw correction.
 
@@ -19,14 +19,14 @@
 #define PID_ROLL_KI  0
 #define PID_ROLL_KD  0 //0.015 // makes it more stable, but it starts spinning bc the BC motor is tilted. Needs yaw correction.
 
-#define PID_YAW_KP   6
+#define PID_YAW_KP   1
 #define PID_YAW_KI   0
-#define PID_YAW_KD   2
-static float pitchKD = PID_PITCH_KD;
+#define PID_YAW_KD   0
+static float pitchKI = PID_PITCH_KI;
 
 #define PID_DEPTH_KP   1
 #define PID_DEPTH_KI   0
-#define PID_DEPTH_KD   0
+#define PID_DEPTH_KD   0.005 // 0
 
 #define MOTOR_BR_REVERSED 0
 #define MOTOR_BL_REVERSED 0
@@ -343,14 +343,14 @@ void Controls::CalibrateMotors(void)
 
 void Controls::IncreaseTuning(void)
 {
-  pitchKD += 0.005;
-  _pitchPID.SetTunings(PID_PITCH_KP, PID_PITCH_KI, pitchKD);
+  pitchKI += 0.01;
+  _pitchPID.SetTunings(PID_PITCH_KP, pitchKI, PID_PITCH_KD);
 }
 
 void Controls::DecreaseTuning(void)
 {
-  pitchKD -= 0.005;
-  pitchKD = max(pitchKD, 0);
-  _pitchPID.SetTunings(PID_PITCH_KP, PID_PITCH_KI, pitchKD);
+  pitchKI -= 0.01;
+  pitchKI = max(pitchKI, 0);
+  _pitchPID.SetTunings(PID_PITCH_KP, pitchKI, PID_PITCH_KD);
 }
 
