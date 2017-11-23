@@ -15,6 +15,8 @@ Supported Platforms:
 - ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
 *************************************************************/
 
+#define STABILIZE_YAW 0 // Set to 1 if you want to stabilize yaw. 
+
 static Controls controls;
 static ManualInput manInput;
 
@@ -33,9 +35,11 @@ void setup()
   manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
   controls.CalibrateAccelGyro();
 
-  //Serial.println("Waiting for button press to calibrate AK8963...");
-  //manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
-  //controls.CalibrateMagnetometer();
+#if STABILIZE_YAW
+  Serial.println("Waiting for button press to calibrate AK8963...");
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
+  controls.CalibrateMagnetometer();
+#endif
 
   Serial.println("Waiting for button presses when ROV is in water, to calibrate pressure...");
   manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
@@ -51,9 +55,14 @@ void loop()
   bool leftButtonPressed, rightButtonPressed;
   double yawChange = 0, thrust = 0, depthChange = 0;
   SpatialState sp;
-
+  
+#if STABILIZE_YAW
+  // Stabilize the ROV through the control loop stack
+  controls.Stabilize(true, true, true, true);
+#else
   // Stabilize the ROV through the control loop stack
   controls.Stabilize(true, true, false, true);
+#endif
 
   // Get manual inputs
   manInput.GetJoystickInput(yawChange, thrust, depthChange);
