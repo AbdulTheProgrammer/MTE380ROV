@@ -7,26 +7,30 @@
 #define MOTOR_NEUTRAL          ((MOTOR_MAX + MOTOR_MIN)/2)
 #define MOTOR_CONSTRAIN(X)     (min(max((X), MOTOR_MIN), MOTOR_MAX))
 
+//#define THRUST_ABS (35)
+//#define THRUST_MAX (MOTOR_NEUTRAL + THRUST_ABS)
+//#define THRUST_MIN (MOTOR_NEUTRAL - THRUST_ABS)
+
 #define PID_SAMPLE_TIME_MS (20)
 #define PID_OUTPUT_MAX     (MOTOR_MAX - MOTOR_NEUTRAL)
 #define PID_OUTPUT_MIN     (MOTOR_MIN - MOTOR_NEUTRAL)
 
-#define PID_PITCH_KP 6 //4
-#define PID_PITCH_KI 0
+#define PID_PITCH_KP 4 //4
+#define PID_PITCH_KI 0.3 // 0
 #define PID_PITCH_KD 0 //0.015 // makes it more stable, but it starts spinning bc the BC motor is tilted. Needs yaw correction.
 
 #define PID_ROLL_KP  1
-#define PID_ROLL_KI  0
+#define PID_ROLL_KI  0.1 //0.01
 #define PID_ROLL_KD  0 //0.015 // makes it more stable, but it starts spinning bc the BC motor is tilted. Needs yaw correction.
 
-#define PID_YAW_KP   6
+#define PID_YAW_KP   2
 #define PID_YAW_KI   0
-#define PID_YAW_KD   2
-static float pitchKD = PID_PITCH_KD;
+#define PID_YAW_KD   0
+static float pitchKI = PID_PITCH_KI;
 
 #define PID_DEPTH_KP   1
 #define PID_DEPTH_KI   0
-#define PID_DEPTH_KD   0
+#define PID_DEPTH_KD   0.015 // 0
 
 #define MOTOR_BR_REVERSED 0
 #define MOTOR_BL_REVERSED 0
@@ -148,6 +152,8 @@ void Controls::CalculatePIDs(bool inStabilizePitch, bool inStabilizeRoll, bool i
   Serial.print(_PIDOutput.pitch);
   Serial.print("\tRoll corr:");
   Serial.print(_PIDOutput.roll);
+  Serial.print("\tYaw corr:");
+  Serial.print(_PIDOutput.yaw);
   Serial.print("\tDepth corr:");
   Serial.println(_PIDOutput.depth);
 
@@ -200,13 +206,13 @@ void Controls::SetNewMotorValues(void)
   motorFRVal -= _PIDOutput.roll;
 
   // Yaw correction (positive correction value when turning left (drifting left))
-  motorBLVal += _PIDOutput.yaw;
-  motorBRVal -= _PIDOutput.yaw;
+  motorBLVal += _setPoint.yaw/2;
+  motorBRVal -= _setPoint.yaw/2;
 
   // Add thrust to the back motors
   // This is done directly, as thust doesn't use PID
-  motorBRVal += _setPoint.thrust;
-  motorBLVal += _setPoint.thrust;
+  motorBRVal += _setPoint.thrust/(2.5);
+  motorBLVal += _setPoint.thrust/(2.5);
 
   // Add depth to depth motors (positive correction value when we're too high from 
   motorFRVal -= _PIDOutput.depth/2;
@@ -343,14 +349,14 @@ void Controls::CalibrateMotors(void)
 
 void Controls::IncreaseTuning(void)
 {
-  pitchKD += 0.005;
-  _pitchPID.SetTunings(PID_PITCH_KP, PID_PITCH_KI, pitchKD);
+//  pitchKD += 0.005;
+//  _pitchPID.SetTunings(PID_PITCH_KP, PID_PITCH_KI, pitchKD);
 }
 
 void Controls::DecreaseTuning(void)
 {
-  pitchKD -= 0.005;
-  pitchKD = max(pitchKD, 0);
-  _pitchPID.SetTunings(PID_PITCH_KP, PID_PITCH_KI, pitchKD);
+//  pitchKD -= 0.005;
+//  pitchKD = max(pitchKD, 0);
+//  _pitchPID.SetTunings(PID_PITCH_KP, PID_PITCH_KI, pitchKD);
 }
 

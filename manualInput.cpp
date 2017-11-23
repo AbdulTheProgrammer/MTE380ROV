@@ -4,10 +4,10 @@
 
 #define LX_PIN A0 
 #define LY_PIN A1 
-#define LD_PIN 16
+#define LD_PIN 17
 #define RX_PIN A2 
 #define RY_PIN A3 
-#define RD_PIN 17
+#define RD_PIN 16
 
 #define USEC_PER_SEC (1000000)
 #define DEBOUNCE_TIME_MS (50)
@@ -44,7 +44,8 @@ void ManualInput::GetJoystickInput(double &setPointYawChange, double &setPointTh
   setPointThrust = ly;
 
   // Increment yaw and depth
-  setPointYawChange   = (((double)rx/THUMBSTICK_ANALOG_OUTPUT_MAX) * MAX_ROTATION_SPEED_DEG_PER_SEC) * ((double)timeDiff / USEC_PER_SEC);
+  //setPointYawChange   = (((double)rx/THUMBSTICK_ANALOG_OUTPUT_MAX) * MAX_ROTATION_SPEED_DEG_PER_SEC) * ((double)timeDiff / USEC_PER_SEC);
+  setPointYawChange = rx;
   setPointDepthChange = (((double)ry/THUMBSTICK_ANALOG_OUTPUT_MAX) * MAX_DEPTH_CHANGE_PER_SEC) * ((double)timeDiff / USEC_PER_SEC);
 
   // Log update time

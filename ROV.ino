@@ -32,21 +32,21 @@ void setup()
   //controls.CalibrateMotors();
 
   Serial.println("Initialized. Waiting for button press to calibrate MPU..");
-  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Left);
   controls.CalibrateAccelGyro();
 
 #if STABILIZE_YAW
   Serial.println("Waiting for button press to calibrate AK8963...");
-  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Left);
   controls.CalibrateMagnetometer();
 #endif
 
   Serial.println("Waiting for button presses when ROV is in water, to calibrate pressure...");
-  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Left);
   controls.CalibratePressureSensor();
 
   Serial.println("Waiting for both button presses to start ROV controls.");
-  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Both);
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Left);
   controls.Start();
 }
 
@@ -69,28 +69,28 @@ void loop()
 
   // Update controls setpoint
   controls.GetCurrentSetpoint(sp);
-  sp.yaw   += yawChange;
+  sp.yaw = yawChange; //sp.yaw   += yawChange;
   sp.thrust = thrust;
   sp.depth += depthChange;
   controls.SetDesiredSpatialState(sp);
 
   // Check e-stop
   manInput.GetButtonState(leftButtonPressed, rightButtonPressed);
-  if (leftButtonPressed && rightButtonPressed)
+  if (leftButtonPressed)
   {
     controls.Stop();
     while(1);
   }
-  else if (leftButtonPressed)
-  {
-    controls.DecreaseTuning();
-    delay(500);
-  }
-  else if (rightButtonPressed)
-  {
-    controls.IncreaseTuning();
-    delay(500);
-  }
+//  else if (leftButtonPressed)
+//  {
+//    controls.DecreaseTuning();
+//    delay(500);
+//  }
+//  else if (rightButtonPressed)
+//  {
+//    controls.IncreaseTuning();
+//    delay(500);
+//  }
   
   delay(LOOP_DELAY_MS);
 }
