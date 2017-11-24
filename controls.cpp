@@ -32,7 +32,7 @@ static float pitchKI = PID_PITCH_KI;
 #define PID_DEPTH_KI   0
 #define PID_DEPTH_KD   0.015 // 0
 
-#define MOTOR_BR_REVERSED 0
+#define MOTOR_BR_REVERSED 1
 #define MOTOR_BL_REVERSED 0
 #define MOTOR_BC_REVERSED 0
 #define MOTOR_FR_REVERSED 0
@@ -43,8 +43,11 @@ static float pitchKI = PID_PITCH_KI;
 #define PORTBR 13
 #define PORTBL 12
 #define PORTBC 11
-#define PORTFL 10
-#define PORTFR 9
+#define PORTFL 9//10
+#define PORTFR 10//9
+
+#define MOTOR_THRUST_CORRECTION 15
+
 
 
 Controls::Controls(void) :   
@@ -212,7 +215,7 @@ void Controls::SetNewMotorValues(void)
   // Add thrust to the back motors
   // This is done directly, as thust doesn't use PID
   motorBRVal += _setPoint.thrust/(2.5);
-  motorBLVal += _setPoint.thrust/(2.5);
+  motorBLVal += _setPoint.thrust/(2.5) > MOTOR_THRUST_CORRECTION ? _setPoint.thrust/(2.5) - MOTOR_THRUST_CORRECTION : 0;
 
   // Add depth to depth motors (positive correction value when we're too high from 
   motorFRVal -= _PIDOutput.depth/2;

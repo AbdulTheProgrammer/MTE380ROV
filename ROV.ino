@@ -15,7 +15,7 @@ Supported Platforms:
 - ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
 *************************************************************/
 
-#define STABILIZE_YAW 0 // Set to 1 if you want to stabilize yaw. 
+#define STABILIZE_YAW 1 // Set to 1 if you want to stabilize yaw. 
 
 static Controls controls;
 static ManualInput manInput;
@@ -32,21 +32,21 @@ void setup()
   //controls.CalibrateMotors();
 
   Serial.println("Initialized. Waiting for button press to calibrate MPU..");
-  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Left);
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
   controls.CalibrateAccelGyro();
 
 #if STABILIZE_YAW
   Serial.println("Waiting for button press to calibrate AK8963...");
-  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Left);
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
   controls.CalibrateMagnetometer();
 #endif
 
   Serial.println("Waiting for button presses when ROV is in water, to calibrate pressure...");
-  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Left);
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Any);
   controls.CalibratePressureSensor();
 
   Serial.println("Waiting for both button presses to start ROV controls.");
-  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Left);
+  manInput.LoopUntilButtonPressAndRelease(ButtonWait_Both);
   controls.Start();
 }
 
@@ -69,28 +69,28 @@ void loop()
 
   // Update controls setpoint
   controls.GetCurrentSetpoint(sp);
-  sp.yaw = yawChange; //sp.yaw   += yawChange;
+  sp.yaw   += yawChange;
   sp.thrust = thrust;
   sp.depth += depthChange;
   controls.SetDesiredSpatialState(sp);
 
   // Check e-stop
   manInput.GetButtonState(leftButtonPressed, rightButtonPressed);
-  if (leftButtonPressed)
+  if (leftButtonPressed && rightButtonPressed)
   {
     controls.Stop();
     while(1);
   }
-//  else if (leftButtonPressed)
-//  {
-//    controls.DecreaseTuning();
-//    delay(500);
-//  }
-//  else if (rightButtonPressed)
-//  {
-//    controls.IncreaseTuning();
-//    delay(500);
-//  }
+  else if (leftButtonPressed)
+  {
+    controls.DecreaseTuning();
+    delay(500);
+  }
+  else if (rightButtonPressed)
+  {
+    controls.IncreaseTuning();
+    delay(500);
+  }
   
   delay(LOOP_DELAY_MS);
 }
